@@ -1,0 +1,7 @@
+﻿services:
+  damifyp:
+    image: damifyp
+    build:
+      context: .
+      dockerfile: DamiFYP/Dockerfile
+

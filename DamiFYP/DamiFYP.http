@@ -1,0 +1,6 @@
+@DamiFYP_HostAddress = http://localhost:5023
+
+GET {{DamiFYP_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
