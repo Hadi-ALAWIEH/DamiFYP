@@ -45,4 +45,13 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\DamiFYP.Application\DamiFYP.Application.csproj" />
+      <ProjectReference Include="..\DamiFYP.Common\DamiFYP.Common.csproj" />
+      <ProjectReference Include="..\DamiFYP.Domain\DamiFYP.Domain.csproj" />
+      <ProjectReference Include="..\DamiFYP.HealthCheck\DamiFYP.HealthCheck.csproj" />
+      <ProjectReference Include="..\DamiFYP.Infrastructure\DamiFYP.Infrastructure.csproj" />
+      <ProjectReference Include="..\DamiFYP.Persistence\DamiFYP.Persistence.csproj" />
+    </ItemGroup>
+
 </Project>

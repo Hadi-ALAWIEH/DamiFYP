@@ -22,7 +22,7 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    public IEnumerable<WeatherForecast> Get(string someMessage)
     {
         var someString = Summaries[0].SomeExtensionMethod();
         var something = _configuration.GetValue<string>("Local:environmentVariables:CONNECTIONSTRINGS__DB");

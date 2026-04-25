@@ -1,14 +1,19 @@
+using DamiFYP.Application.Filters;
+using DamiFYP.Persistence.Contexts;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers(options =>
+    options.Filters
+        .Add<ExampleFilter>());
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Configuration.AddJsonFile("Config/Development/appsettings.Development.json");
 var connectionString = builder.Configuration.GetValue<string>("Local:environmentVariables:CONNECTIONSTRINGS__DB");
+
+builder.Services.AddNpgsql<DamiContext>(connectionString);
 
 var app = builder.Build();
 
