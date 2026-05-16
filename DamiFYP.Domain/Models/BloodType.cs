@@ -7,5 +7,17 @@ public class BloodType
     public long UserId { get; set; }
     public User User { get; set; } = null!;
 
-    public string Description { get; set; } = string.Empty;
+    public BloodTypeName BloodTypeName { get; set; } = BloodTypeName.APositive;
+}
+
+public enum BloodTypeName
+{
+    APositive,
+    ANegative,
+    BPositive,
+    BNegative,
+    OPositive,
+    ONegative,
+    AbPositive,
+    AbNegative
 }

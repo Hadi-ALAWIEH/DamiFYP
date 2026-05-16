@@ -5,7 +5,7 @@ public class DonationRequest
     public long Id { get; set; }
     public long UserId { get; set; }
 
-    public string BloodType { get; set; } = string.Empty;
+    public BloodTypeName BloodTypeName { get; set; }
     public int? Quantity { get; set; }
 
     public double? Latitude { get; set; }

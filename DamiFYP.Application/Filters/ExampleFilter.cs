@@ -14,6 +14,7 @@ public class ExampleFilter : IAsyncActionFilter
 
     public Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+
         var some = context.ActionDescriptor.Parameters;
         foreach (var param in some) _logger.LogInformation($"the name of this parameter is {param.Name} and it is a {param.ParameterType}");
 

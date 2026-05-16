@@ -50,7 +50,7 @@ public class DamiContext : DbContext
             entity.ToTable("DonationRequest");
             entity.HasKey(x => x.Id);
 
-            entity.Property(x => x.BloodType).IsRequired();
+            entity.Property(x => x.BloodTypeName).IsRequired();
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             entity.HasOne(x => x.User)

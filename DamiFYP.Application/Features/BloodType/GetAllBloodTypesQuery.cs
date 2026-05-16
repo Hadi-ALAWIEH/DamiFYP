@@ -2,7 +2,7 @@
 
 namespace DamiFYP.Application.Features.BloodType;
 
-public class GetAllBloodTypesQuery : IRequest<GetAllBloodTypesQueryViewModel>
+public class GetAllBloodTypesQuery : IRequest<List<BloodTypeViewModel>>
 {
 
 }
