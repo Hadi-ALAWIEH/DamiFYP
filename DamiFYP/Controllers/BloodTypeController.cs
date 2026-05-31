@@ -17,8 +17,10 @@ public class BloodTypeController : ControllerBase
     }
 
     [HttpGet("GetAllBloodTypes")]
+    [Authorize(Roles="Admin, donor")]
     public async Task<IActionResult> GetBloodTypes()
     {
         return Ok(await _mediator.Send(new GetAllBloodTypesQuery()));
     }
+
 }

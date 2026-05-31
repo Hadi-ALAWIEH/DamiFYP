@@ -5,3 +5,58 @@
       context: .
       dockerfile: DamiFYP/Dockerfile
 
+  damifyp-1:
+    image: damifyp-1
+    build:
+      context: .
+      dockerfile: DamiFYP/Dockerfile
+
+  damifyp.application:
+    image: damifyp.application
+    build:
+      context: .
+      dockerfile: DamiFYP.Application/Dockerfile
+
+  damifyp.common:
+    image: damifyp.common
+    build:
+      context: .
+      dockerfile: DamiFYP.Common/Dockerfile
+
+  damifyp.domain:
+    image: damifyp.domain
+    build:
+      context: .
+      dockerfile: DamiFYP.Domain/Dockerfile
+
+  damifyp.healthcheck:
+    image: damifyp.healthcheck
+    build:
+      context: .
+      dockerfile: DamiFYP.HealthCheck/Dockerfile
+
+  damifyp.infrastructure:
+    image: damifyp.infrastructure
+    build:
+      context: .
+      dockerfile: DamiFYP.Infrastructure/Dockerfile
+
+  damifyp.persistence:
+    image: damifyp.persistence
+    build:
+      context: .
+      dockerfile: DamiFYP.Persistence/Dockerfile
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.1
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: true
+    volumes:
+      -
+    ports:
+      - "8080:8080"
+    user: root
