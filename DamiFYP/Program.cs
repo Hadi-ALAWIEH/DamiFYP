@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using DamiFYP;
 using DamiFYP.Application.Features.BloodType;
 using DamiFYP.Application.Filters;
@@ -23,24 +24,124 @@ var connectionString = builder.Configuration.GetValue<string>("Local:environment
 builder.Services.AddNpgsql<DamiContext>(connectionString);
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection("Keycloak"));
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication().AddJwtBearer();
 
+// todo: keep for if you would like to use manual token issuing
+// builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+//     .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
+//     {
+//         var jwt = jwtOptions.Value;
+//         options.TokenValidationParameters = new TokenValidationParameters()
+//         {
+//             ValidIssuer = jwt.Issuer,
+//             ValidAudience = jwt.Audience,
+//             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
+//             ValidateIssuer = true,
+//             ValidateAudience = true,
+//             ValidateLifetime = true,
+//             ValidateIssuerSigningKey = true,
+//             RoleClaimType = ClaimTypes.Role
+//         };
+//     });
+
+// builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+//     .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
+//     {
+//         var jwt = jwtOptions.Value;
+//         options.TokenValidationParameters = new TokenValidationParameters()
+//         {
+//             ValidIssuer = jwt.Issuer,
+//             ValidAudience = jwt.Audience,
+//             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
+//             ValidateIssuer = true,
+//             ValidateAudience = true,
+//             ValidateLifetime = true,
+//             ValidateIssuerSigningKey = true,
+//             RoleClaimType = ClaimTypes.Role
+//         };
+//     });
+
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-    .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
+    .Configure<IOptions<KeycloakOptions>>((options, keycloakOptions) =>
     {
-        var jwt = jwtOptions.Value;
-        options.TokenValidationParameters = new TokenValidationParameters()
+        var kc = keycloakOptions.Value;
+
+        if (!string.IsNullOrWhiteSpace(kc.Audience))
         {
-            ValidIssuer = jwt.Issuer,
-            ValidAudience = jwt.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            RoleClaimType = ClaimTypes.Role
+            options.Audience = kc.Audience;
+        }
+
+        if (!string.IsNullOrWhiteSpace(kc.Authority))
+        {
+            options.Authority = kc.Authority;
+        }
+
+        // if (!string.IsNullOrWhiteSpace(kc.ClientId))
+        // {
+        //     options.Audience = kc.ClientId;
+        // }
+
+        if (!string.IsNullOrWhiteSpace(kc.MetadataAddress))
+        {
+            options.MetadataAddress = kc.MetadataAddress;
+        }
+
+        options.RequireHttpsMetadata = kc.RequireHttpsMetadata;
+
+        options.TokenValidationParameters ??= new TokenValidationParameters();
+        options.TokenValidationParameters.ValidateIssuer = true;
+        options.TokenValidationParameters.ValidateAudience = true;
+        options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                if (context.Principal?.Identity is not ClaimsIdentity identity)
+                {
+                    return Task.CompletedTask;
+                }
+
+                var realmAccess = context.Principal.FindFirst("realm_access")?.Value;
+                if (!string.IsNullOrWhiteSpace(realmAccess))
+                {
+                    using var realmDoc = JsonDocument.Parse(realmAccess);
+                    if (realmDoc.RootElement.TryGetProperty("roles", out var roles))
+                    {
+                        foreach (var role in roles.EnumerateArray())
+                        {
+                            var roleName = role.GetString();
+                            if (!string.IsNullOrWhiteSpace(roleName))
+                            {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                            }
+                        }
+                    }
+                }
+
+                var resourceAccess = context.Principal.FindFirst("resource_access")?.Value;
+                if (!string.IsNullOrWhiteSpace(resourceAccess) && !string.IsNullOrWhiteSpace(kc.Audience))
+                {
+                    using var resourceDoc = JsonDocument.Parse(resourceAccess);
+                    if (resourceDoc.RootElement.TryGetProperty(kc.Audience, out var client) &&
+                        client.TryGetProperty("roles", out var roles))
+                    {
+                        foreach (var role in roles.EnumerateArray())
+                        {
+                            var roleName = role.GetString();
+                            if (!string.IsNullOrWhiteSpace(roleName))
+                            {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                            }
+                        }
+                    }
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
