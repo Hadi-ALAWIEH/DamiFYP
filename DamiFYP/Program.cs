@@ -51,15 +51,39 @@ builder.Services.AddExceptionHandler<DamiGlobalExceptionHandler>();
 
 var app = builder.Build();
 
+var oauth2Section = builder.Configuration.GetSection("OAuth2");
+var oauth2Scopes = oauth2Section.GetSection("Scopes").Get<Dictionary<string, string>>()
+                   ?? new Dictionary<string, string>
+                   {
+                       ["openid"] = "OpenID",
+                       ["profile"] = "Profile"
+                   };
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
         {
-            options.WithTitle("DamiFYP API")
+            options
+                .WithTitle("DamiFYP API")
                 .WithTheme(ScalarTheme.BluePlanet)
                 .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
-                .AddPreferredSecuritySchemes("Bearer")
+                .AddPreferredSecuritySchemes("OAuth2")
+                .AddOAuth2Flows("OAuth2", flows =>
+                {
+                    flows.AuthorizationCode = new AuthorizationCodeFlow()
+                    {
+                        AuthorizationUrl = oauth2Section.GetValue<string>("AuthorizationUrl"),
+                        TokenUrl = oauth2Section.GetValue<string>("TokenUrl"),
+                        RedirectUri = oauth2Section.GetValue<string>("RedirectUri"),
+                        SelectedScopes = oauth2Scopes.Keys.ToList(),
+                        ClientId = oauth2Section.GetValue<string>("ClientId"),
+                        ClientSecret = oauth2Section.GetValue<string>("ClientSecret"),
+                        Pkce = Pkce.Sha256,
+                        CredentialsLocation = CredentialsLocation.Body
+                    };
+                })
+                // .AddPreferredSecuritySchemes("Bearer")
                 .AddHttpAuthentication("Bearer", auth => { auth.Token = ""; })
                 .EnablePersistentAuthentication();
         }
