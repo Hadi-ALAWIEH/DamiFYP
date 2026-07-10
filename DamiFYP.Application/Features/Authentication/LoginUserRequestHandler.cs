@@ -22,7 +22,7 @@ public class LoginUserRequestHandler : IRequestHandler<LoginUserRequest, LoginUs
         // generate token for user
         if (authedUser is not null)
             return new LoginUserRequestViewModel()
-                { Token = _tokenService.GenerateToken(authedUser.Id, authedUser.Email, authedUser.Role) };
+                { Token = _tokenService.GenerateToken(authedUser.Id, authedUser.Email, authedUser.Role.ToString()) };
 
         throw new InvalidCredentialException("You have entered invalid credentials");
     }

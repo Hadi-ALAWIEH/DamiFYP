@@ -3,12 +3,17 @@ using System.Text;
 using System.Text.Json;
 using DamiFYP;
 using DamiFYP.Application.Features.BloodType;
+using DamiFYP.Application.Authorization;
+using DamiFYP.Domain.Models;
 using DamiFYP.Application.Filters;
 using DamiFYP.Application.Helpers;
 using DamiFYP.Application.Mappers;
+using DamiFYP.Application.Features.DonationRequests;
 using DamiFYP.ExceptionHandlers.cs;
 using DamiFYP.Persistence.Contexts;
+using DamiFYP.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
@@ -25,8 +30,22 @@ builder.Services.AddNpgsql<DamiContext>(connectionString);
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection("Keycloak"));
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddLogging();
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthorizationPolicies.CanAccessConversations, policy =>
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+
+    options.AddPolicy(AuthorizationPolicies.CanManageDonationRequests, policy =>
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+
+    options.AddPolicy(AuthorizationPolicies.CanManageBloodTypes, policy =>
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+});
+
 builder.Services.AddAuthentication().AddJwtBearer();
 
 // todo: keep for if you would like to use manual token issuing
@@ -140,6 +159,24 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
                     }
                 }
 
+                // Parse roles from damifyp-client resource_access claim
+                if (!string.IsNullOrWhiteSpace(resourceAccess) && !string.IsNullOrWhiteSpace(kc.ClientId))
+                {
+                    using var resourceDoc = JsonDocument.Parse(resourceAccess);
+                    if (resourceDoc.RootElement.TryGetProperty(kc.ClientId, out var client) &&
+                        client.TryGetProperty("roles", out var roles))
+                    {
+                        foreach (var role in roles.EnumerateArray())
+                        {
+                            var roleName = role.GetString();
+                            if (!string.IsNullOrWhiteSpace(roleName))
+                            {
+                                identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                            }
+                        }
+                    }
+                }
+
                 return Task.CompletedTask;
             }
         };
@@ -147,6 +184,11 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 
 builder.Services.AddScoped<ITokenService, TokenGeneratorService>();
 builder.Services.AddScoped<IDamiAuthService, ManualAuthService>();
+builder.Services.AddScoped<ICurrentUserProfileService, CurrentUserProfileService>();
+builder.Services.AddScoped<CurrentUserProfileMiddleware>();
+builder.Services.AddScoped<IAuthorizationHandler, BusinessRoleHandler>();
+// register match service used by Hangfire jobs
+builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DamiGlobalExceptionHandler>();
 
@@ -195,6 +237,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
+app.UseMiddleware<CurrentUserProfileMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

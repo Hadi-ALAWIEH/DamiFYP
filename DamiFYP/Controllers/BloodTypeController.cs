@@ -1,4 +1,5 @@
-﻿using DamiFYP.Application.Features.BloodType;
+﻿using DamiFYP.Application.Authorization;
+using DamiFYP.Application.Features.BloodType;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ public class BloodTypeController : ControllerBase
     }
 
     [HttpGet("GetAllBloodTypes")]
-    [Authorize(Roles="Admin, donor, manage-account")]
+    [Authorize(Policy = AuthorizationPolicies.CanManageBloodTypes)]
     public async Task<IActionResult> GetBloodTypes()
     {
         return Ok(await _mediator.Send(new GetAllBloodTypesQuery()));

@@ -7,12 +7,13 @@ public class User
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string PasswordHash { get; set; } = string.Empty;
-    public string Role { get; set; } = string.Empty;
+    public BusinessRole Role { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public bool IsAvailable { get; set; }
     public DateTime? LastActiveAt { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string KeyCloakId { get; set; } = string.Empty;
 
     public BloodType BloodType { get; set; } = new();
     public ICollection<DonationRequest> DonationRequests { get; set; } = new List<DonationRequest>();
