@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using DamiFYP.Domain.Models;
 
 namespace DamiFYP.Application.Features.Conversations;
