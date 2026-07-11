@@ -18,7 +18,8 @@ public class DonationRequestController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
+    // [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
+    [Authorize(Roles = "Admin", Policy = AuthorizationPolicies.CanManageDonationRequests)]
     public async Task<IActionResult> GetDonationRequest(int id)
     {
         var result = await _mediator.Send(new GetDonationRequestQuery { Id = id });
@@ -64,6 +65,14 @@ public class DonationRequestController : ControllerBase
     public async Task<IActionResult> GetAllDonationRequests()
     {
         var result = await _mediator.Send(new GetAllDonationRequestsQuery());
+        return Ok(result);
+    }
+
+    [HttpGet("current-user-donation-requests")]
+    [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
+    public async Task<IActionResult> GetCurrentUserDonationRequests()
+    {
+        var result = await _mediator.Send(new GetCurrentUserDonationRequestsQuery());
         return Ok(result);
     }
 }

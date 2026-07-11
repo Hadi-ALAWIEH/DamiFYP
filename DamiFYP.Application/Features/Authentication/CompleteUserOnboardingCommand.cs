@@ -7,6 +7,7 @@ using DamiFYP.Domain.Models;
 using DamiFYP.Persistence.Contexts;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DamiFYP.Application.Features.Authentication;
 
@@ -30,11 +31,13 @@ public sealed class CompleteUserOnboardingCommandHandler : IRequestHandler<Compl
 {
     private readonly DamiContext _context;
     private readonly ICurrentUserProfileService _profileService;
+    private readonly ILogger<CompleteUserOnboardingCommandHandler> _logger;
 
-    public CompleteUserOnboardingCommandHandler(DamiContext context, ICurrentUserProfileService profileService)
+    public CompleteUserOnboardingCommandHandler(DamiContext context, ICurrentUserProfileService profileService, ILogger<CompleteUserOnboardingCommandHandler> logger)
     {
         _context = context;
         _profileService = profileService;
+        _logger = logger;
     }
 
     public async Task<CompleteUserOnboardingViewModel> Handle(CompleteUserOnboardingCommand request, CancellationToken cancellationToken)
@@ -84,6 +87,7 @@ public sealed class CompleteUserOnboardingCommandHandler : IRequestHandler<Compl
         if (!string.IsNullOrWhiteSpace(request.KeyCloakUserId))
         {
             await _profileService.InvalidateAsync(request.KeyCloakUserId);
+            _logger.LogInformation("The cache has been invalidated");
             var refreshedProfile = await _profileService.GetByUserIdAsync(request.KeyCloakUserId, normalizedEmail, cancellationToken);
             if (refreshedProfile != null)
             {

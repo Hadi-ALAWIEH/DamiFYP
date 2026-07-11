@@ -40,7 +40,8 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
 
     options.AddPolicy(AuthorizationPolicies.CanManageDonationRequests, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Seeker, BusinessRole.ManageAccount)));
+        // policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
 
     options.AddPolicy(AuthorizationPolicies.CanManageBloodTypes, policy =>
         policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
@@ -209,7 +210,7 @@ if (app.Environment.IsDevelopment())
         {
             options
                 .WithTitle("DamiFYP API")
-                .WithTheme(ScalarTheme.BluePlanet)
+                .WithTheme(ScalarTheme.Mars)
                 .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
                 .AddPreferredSecuritySchemes("OAuth2")
                 .AddOAuth2Flows("OAuth2", flows =>
