@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DamiFYP.Persistence.Migrations
 {
     [DbContext(typeof(DamiContext))]
-    [Migration("20260705174315_InitialCreateUpdated")]
-    partial class InitialCreateUpdated
+    [Migration("20260719115043_SecondCreate")]
+    partial class SecondCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,12 +36,12 @@ namespace DamiFYP.Persistence.Migrations
                     b.Property<int>("BloodTypeName")
                         .HasColumnType("integer");
 
-                    b.Property<long>("UserId")
+                    b.Property<long>("DamiUserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
+                    b.HasIndex("DamiUserId")
                         .IsUnique();
 
                     b.ToTable("BloodTypes");
@@ -77,16 +77,70 @@ namespace DamiFYP.Persistence.Migrations
                     b.Property<long>("ConversationId")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("UserId")
+                    b.Property<long>("DamiUserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ConversationId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("DamiUserId");
 
                     b.ToTable("ConversationParticipants");
+                });
+
+            modelBuilder.Entity("DamiFYP.Domain.Models.DamiUser", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsAvailable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("KeyCloakId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastActiveAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.ToTable("DamiUser", (string)null);
                 });
 
             modelBuilder.Entity("DamiFYP.Domain.Models.DonationPost", b =>
@@ -100,15 +154,15 @@ namespace DamiFYP.Persistence.Migrations
                     b.Property<int>("BloodTypeName")
                         .HasColumnType("integer");
 
+                    b.Property<long>("DamiUserId")
+                        .HasColumnType("bigint");
+
                     b.Property<int?>("Quantity")
                         .HasColumnType("integer");
 
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("DamiUserId");
 
                     b.ToTable("DonationPosts");
                 });
@@ -121,6 +175,10 @@ namespace DamiFYP.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("BloodTypeName")
                         .HasColumnType("integer");
 
@@ -128,6 +186,9 @@ namespace DamiFYP.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<long>("DamiUserId")
+                        .HasColumnType("bigint");
 
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");
@@ -141,18 +202,15 @@ namespace DamiFYP.Persistence.Migrations
                     b.Property<int?>("Quantity")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
-                    b.Property<string>("UrgencyLevel")
-                        .HasColumnType("text");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
+                    b.Property<int>("Urgency")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("DamiUserId");
 
                     b.ToTable("DonationRequest", (string)null);
                 });
@@ -223,69 +281,15 @@ namespace DamiFYP.Persistence.Migrations
                     b.ToTable("Message", (string)null);
                 });
 
-            modelBuilder.Entity("DamiFYP.Domain.Models.User", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsAvailable")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("KeyCloakId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastActiveAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<double?>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double?>("Longitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.ToTable("User", (string)null);
-                });
-
             modelBuilder.Entity("DamiFYP.Domain.Models.BloodType", b =>
                 {
-                    b.HasOne("DamiFYP.Domain.Models.User", "User")
+                    b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
                         .WithOne("BloodType")
-                        .HasForeignKey("DamiFYP.Domain.Models.BloodType", "UserId")
+                        .HasForeignKey("DamiFYP.Domain.Models.BloodType", "DamiUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("DamiUser");
                 });
 
             modelBuilder.Entity("DamiFYP.Domain.Models.Conversation", b =>
@@ -307,35 +311,37 @@ namespace DamiFYP.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("DamiFYP.Domain.Models.User", "User")
+                    b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
                         .WithMany("ConversationParticipants")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("DamiUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Conversation");
 
-                    b.Navigation("User");
+                    b.Navigation("DamiUser");
                 });
 
             modelBuilder.Entity("DamiFYP.Domain.Models.DonationPost", b =>
                 {
-                    b.HasOne("DamiFYP.Domain.Models.User", null)
+                    b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
                         .WithMany("DonationPosts")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("DamiUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("DamiUser");
                 });
 
             modelBuilder.Entity("DamiFYP.Domain.Models.DonationRequest", b =>
                 {
-                    b.HasOne("DamiFYP.Domain.Models.User", "User")
+                    b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
                         .WithMany("DonationRequests")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("DamiUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("DamiUser");
                 });
 
             modelBuilder.Entity("DamiFYP.Domain.Models.Match", b =>
@@ -372,6 +378,18 @@ namespace DamiFYP.Persistence.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("DamiFYP.Domain.Models.DamiUser", b =>
+                {
+                    b.Navigation("BloodType")
+                        .IsRequired();
+
+                    b.Navigation("ConversationParticipants");
+
+                    b.Navigation("DonationPosts");
+
+                    b.Navigation("DonationRequests");
+                });
+
             modelBuilder.Entity("DamiFYP.Domain.Models.DonationPost", b =>
                 {
                     b.Navigation("Matches");
@@ -386,18 +404,6 @@ namespace DamiFYP.Persistence.Migrations
                 {
                     b.Navigation("Conversation")
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("DamiFYP.Domain.Models.User", b =>
-                {
-                    b.Navigation("BloodType")
-                        .IsRequired();
-
-                    b.Navigation("ConversationParticipants");
-
-                    b.Navigation("DonationPosts");
-
-                    b.Navigation("DonationRequests");
                 });
 #pragma warning restore 612, 618
         }

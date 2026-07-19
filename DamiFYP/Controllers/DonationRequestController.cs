@@ -61,7 +61,7 @@ public class DonationRequestController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
+    [Authorize(Policy = AuthorizationPolicies.CanViewAvailableDonationRequests)]
     public async Task<IActionResult> GetAllDonationRequests()
     {
         var result = await _mediator.Send(new GetAllDonationRequestsQuery());

@@ -40,6 +40,11 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
         _logger.LogInformation(
             $"The Type of authentication used for this request is {httpContext.User.Identity.AuthenticationType}");
 
+        foreach (var claim in httpContext.User.Claims)
+        {
+            _logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);
+        }
+
         var existingProfile = httpContext.GetUserProfile();
         if (existingProfile != null)
         {
@@ -71,7 +76,7 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
             return cached;
         }
 
-        var user = await _context.Users
+        var user = await _context.DamiUsers
             .AsNoTracking()
             .Include(x => x.BloodType)
             .FirstOrDefaultAsync(x => x.KeyCloakId == userId, cancellationToken);
@@ -83,7 +88,7 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
                 ? $"{userId}@bootstrap.local"
                 : userEmail.Trim();
 
-            user = new User()
+            user = new DamiUser()
             {
                 KeyCloakId = userId,
                 Email = normalizedEmail,
@@ -92,7 +97,7 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
                 Role = BusinessRole.None,
                 IsAvailable = false
             };
-            await _context.Users.AddAsync(user, cancellationToken);
+            await _context.DamiUsers.AddAsync(user, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
             // todo: here oblige the user to send the request that has to do with bootstrapping the user and invalidating the cache
         }
@@ -108,19 +113,19 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
         return Task.CompletedTask;
     }
 
-    private static UserProfile Map(User user)
+    private static UserProfile Map(DamiUser damiUser)
     {
         return new UserProfile
         {
-            UserId = user.Id,
-            Email = user.Email,
-            Name = user.Name,
-            BusinessRole = user.Role,
-            BloodTypeName = user.BloodType?.ToString(),
-            Latitude = user.Latitude,
-            Longitude = user.Longitude,
-            IsAvailable = user.IsAvailable,
-            CreatedAt = user.CreatedAt
+            UserId = damiUser.Id,
+            Email = damiUser.Email,
+            Name = damiUser.Name,
+            BusinessRole = damiUser.Role,
+            BloodTypeName = damiUser.BloodType?.ToString(),
+            Latitude = damiUser.Latitude,
+            Longitude = damiUser.Longitude,
+            IsAvailable = damiUser.IsAvailable,
+            CreatedAt = damiUser.CreatedAt
         };
     }
 }

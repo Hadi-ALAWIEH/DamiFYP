@@ -6,6 +6,7 @@ public enum BusinessRole
     Admin = 1,
     Donor = 2,
     Seeker = 3,
-    ManageAccount = 4
+    DonorAndSeeker = 4,
+    ManageAccount = 5,
 }
 

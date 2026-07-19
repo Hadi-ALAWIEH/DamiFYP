@@ -9,7 +9,7 @@ public class DamiContext : DbContext
     {
     }
 
-    public DbSet<User> Users => Set<User>();
+    public DbSet<DamiUser> DamiUsers => Set<DamiUser>();
     public DbSet<DonationRequest> DonationRequests => Set<DonationRequest>();
     public DbSet<DonationPost> DonationPosts => Set<DonationPost>();
     public DbSet<Match> Matches => Set<Match>();
@@ -26,14 +26,14 @@ public class DamiContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<User>(entity =>
+        modelBuilder.Entity<DamiUser>(entity =>
         {
-            entity.ToTable("User");
+            entity.ToTable("DamiUser");
             entity.HasKey(x => x.Id);
 
             entity.HasOne(user => user.BloodType)
-                .WithOne(bloodType => bloodType.User)
-                .HasForeignKey<BloodType>(bloodType => bloodType.UserId);
+                .WithOne(bloodType => bloodType.DamiUser)
+                .HasForeignKey<BloodType>(bloodType => bloodType.DamiUserId);
 
             entity.Property(x => x.Name).IsRequired();
             entity.Property(x => x.Email).IsRequired();
@@ -53,9 +53,9 @@ public class DamiContext : DbContext
             entity.Property(x => x.BloodTypeName).IsRequired();
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            entity.HasOne(x => x.User)
+            entity.HasOne(x => x.DamiUser)
                 .WithMany(x => x.DonationRequests)
-                .HasForeignKey(x => x.UserId)
+                .HasForeignKey(x => x.DamiUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

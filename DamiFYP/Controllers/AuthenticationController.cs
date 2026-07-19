@@ -32,6 +32,7 @@ public class AuthenticationController : ControllerBase {
     {
         var profile = HttpContext.GetUserProfile(); // this will get the template profile written in Items dictionary
         var keycloakUserId = User.FindFirstValue("sub") ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userEmailFromToken = User.FindFirstValue("email") ?? User.FindFirstValue(ClaimTypes.Email);
 
         if (profile == null || string.IsNullOrWhiteSpace(keycloakUserId))
         {
@@ -40,6 +41,7 @@ public class AuthenticationController : ControllerBase {
 
         request.UserId = profile.UserId;
         request.KeyCloakUserId = keycloakUserId;
+        request.Email = userEmailFromToken;
 
         var result = await _mediator.Send(request, token);
         return Ok(result);

@@ -7,13 +7,13 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DamiFYP.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateUpdated : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "User",
+                name: "DamiUser",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
@@ -31,7 +31,7 @@ namespace DamiFYP.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_User", x => x.Id);
+                    table.PrimaryKey("PK_DamiUser", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -47,9 +47,9 @@ namespace DamiFYP.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_BloodTypes", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_BloodTypes_User_UserId",
+                        name: "FK_BloodTypes_DamiUser_UserId",
                         column: x => x.UserId,
-                        principalTable: "User",
+                        principalTable: "DamiUser",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -62,15 +62,16 @@ namespace DamiFYP.Persistence.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
                     BloodTypeName = table.Column<int>(type: "integer", nullable: false),
-                    Quantity = table.Column<int>(type: "integer", nullable: true)
+                    Quantity = table.Column<int>(type: "integer", nullable: true),
+                    DamiUserId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DonationPosts", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DonationPosts_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
+                        name: "FK_DonationPosts_DamiUser_DamiUserId",
+                        column: x => x.DamiUserId,
+                        principalTable: "DamiUser",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -86,8 +87,9 @@ namespace DamiFYP.Persistence.Migrations
                     Quantity = table.Column<int>(type: "integer", nullable: true),
                     Latitude = table.Column<double>(type: "double precision", nullable: true),
                     Longitude = table.Column<double>(type: "double precision", nullable: true),
-                    UrgencyLevel = table.Column<string>(type: "text", nullable: true),
-                    Status = table.Column<string>(type: "text", nullable: true),
+                    Address = table.Column<string>(type: "text", nullable: false),
+                    Urgency = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
                     NeededByDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
@@ -95,9 +97,9 @@ namespace DamiFYP.Persistence.Migrations
                 {
                     table.PrimaryKey("PK_DonationRequest", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_DonationRequest_User_UserId",
+                        name: "FK_DonationRequest_DamiUser_UserId",
                         column: x => x.UserId,
-                        principalTable: "User",
+                        principalTable: "DamiUser",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -155,7 +157,8 @@ namespace DamiFYP.Persistence.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<long>(type: "bigint", nullable: false),
-                    ConversationId = table.Column<long>(type: "bigint", nullable: false)
+                    ConversationId = table.Column<long>(type: "bigint", nullable: false),
+                    DamiUserId = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -167,9 +170,9 @@ namespace DamiFYP.Persistence.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ConversationParticipants_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
+                        name: "FK_ConversationParticipants_DamiUser_DamiUserId",
+                        column: x => x.DamiUserId,
+                        principalTable: "DamiUser",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -208,9 +211,9 @@ namespace DamiFYP.Persistence.Migrations
                 column: "ConversationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ConversationParticipants_UserId",
+                name: "IX_ConversationParticipants_DamiUserId",
                 table: "ConversationParticipants",
-                column: "UserId");
+                column: "DamiUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Conversations_MatchId",
@@ -219,9 +222,15 @@ namespace DamiFYP.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_DonationPosts_UserId",
+                name: "IX_DamiUser_Email",
+                table: "DamiUser",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DonationPosts_DamiUserId",
                 table: "DonationPosts",
-                column: "UserId");
+                column: "DamiUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DonationRequest_UserId",
@@ -242,12 +251,6 @@ namespace DamiFYP.Persistence.Migrations
                 name: "IX_Message_ConversationParticipantId",
                 table: "Message",
                 column: "ConversationParticipantId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_User_Email",
-                table: "User",
-                column: "Email",
-                unique: true);
         }
 
         /// <inheritdoc />
@@ -275,7 +278,7 @@ namespace DamiFYP.Persistence.Migrations
                 name: "DonationRequest");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "DamiUser");
         }
     }
 }

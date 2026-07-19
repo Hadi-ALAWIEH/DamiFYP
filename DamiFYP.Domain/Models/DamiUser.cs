@@ -1,6 +1,6 @@
 ﻿namespace DamiFYP.Domain.Models;
 
-public class User
+public class DamiUser
 {
     public long Id { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
 using MediatR;
 using DamiFYP.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,12 @@ public class GetDonationRequestQuery : IRequest<DonationRequestViewModel>
 public class GetDonationRequestQueryHandler : IRequestHandler<GetDonationRequestQuery, DonationRequestViewModel>
 {
     private readonly DamiContext _context;
+    private readonly IMapper _mapper;
 
-    public GetDonationRequestQueryHandler(DamiContext context)
+    public GetDonationRequestQueryHandler(DamiContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
     }
 
     public async Task<DonationRequestViewModel> Handle(GetDonationRequestQuery request, CancellationToken cancellationToken)
@@ -29,19 +32,21 @@ public class GetDonationRequestQueryHandler : IRequestHandler<GetDonationRequest
 
         if (entity == null) return null!; // let controller handle nulls (will cause 204/500 depending)
 
-        return new DonationRequestViewModel
-        {
-            Id = entity.Id,
-            UserId = entity.UserId,
-            BloodTypeName = entity.BloodTypeName.ToString(),
-            Quantity = entity.Quantity,
-            Latitude = entity.Latitude,
-            Longitude = entity.Longitude,
-            UrgencyLevel = entity.UrgencyLevel,
-            Status = entity.Status,
-            CreatedAt = entity.CreatedAt,
-            NeededByDate = entity.NeededByDate
-        };
+        return _mapper.Map<DonationRequestViewModel>(entity);
+
+        // return new DonationRequestViewModel
+        // {
+        //     Id = entity.Id,
+        //     UserId = entity.UserId,
+        //     BloodTypeName = entity.BloodTypeName.ToString(),
+        //     Quantity = entity.Quantity,
+        //     Latitude = entity.Latitude,
+        //     Longitude = entity.Longitude,
+        //     Urgency = entity.UrgencyLevel,
+        //     Status = entity.Status,
+        //     CreatedAt = entity.CreatedAt,
+        //     NeededByDate = entity.NeededByDate
+        // };
     }
 }
 

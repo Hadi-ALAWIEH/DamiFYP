@@ -25,12 +25,12 @@ public class GetAllDonationRequestsQueryHandler : IRequestHandler<GetAllDonation
         return entities.Select(entity => new DonationRequestViewModel
         {
             Id = entity.Id,
-            UserId = entity.UserId,
+            DamiUserId = entity.DamiUserId,
             BloodTypeName = entity.BloodTypeName.ToString(),
             Quantity = entity.Quantity,
             Latitude = entity.Latitude,
             Longitude = entity.Longitude,
-            UrgencyLevel = entity.UrgencyLevel,
+            Urgency = entity.Urgency,
             Status = entity.Status,
             CreatedAt = entity.CreatedAt,
             NeededByDate = entity.NeededByDate

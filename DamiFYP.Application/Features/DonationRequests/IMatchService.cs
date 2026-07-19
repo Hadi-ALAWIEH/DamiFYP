@@ -6,7 +6,7 @@ namespace DamiFYP.Application.Features.DonationRequests;
 
 public interface IMatchService
 {
-    Task<List<DonationPostMatchCandidateViewModel>> GetCandidates(long donationRequestId, CancellationToken cancellationToken);
+    Task<DonationRequestMatchCandidatesViewModel> GetCandidatesAsync(long donationRequestId, CancellationToken cancellationToken);
     Task ConfirmMatch(long donationRequestId, long donationPostId, CancellationToken cancellationToken);
 }
 

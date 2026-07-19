@@ -3,6 +3,7 @@ using System;
 using DamiFYP.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DamiFYP.Persistence.Migrations
 {
     [DbContext(typeof(DamiContext))]
-    partial class DamiContextModelSnapshot : ModelSnapshot
+    [Migration("20260719112439_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,12 +36,12 @@ namespace DamiFYP.Persistence.Migrations
                     b.Property<int>("BloodTypeName")
                         .HasColumnType("integer");
 
-                    b.Property<long>("DamiUserId")
+                    b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DamiUserId")
+                    b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("BloodTypes");
@@ -75,6 +78,9 @@ namespace DamiFYP.Persistence.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<long>("DamiUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
@@ -157,6 +163,9 @@ namespace DamiFYP.Persistence.Migrations
                     b.Property<int?>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.HasIndex("DamiUserId");
@@ -184,9 +193,6 @@ namespace DamiFYP.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.Property<long>("DamiUserId")
-                        .HasColumnType("bigint");
-
                     b.Property<double?>("Latitude")
                         .HasColumnType("double precision");
 
@@ -205,9 +211,12 @@ namespace DamiFYP.Persistence.Migrations
                     b.Property<int>("Urgency")
                         .HasColumnType("integer");
 
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DamiUserId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("DonationRequest", (string)null);
                 });
@@ -282,7 +291,7 @@ namespace DamiFYP.Persistence.Migrations
                 {
                     b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
                         .WithOne("BloodType")
-                        .HasForeignKey("DamiFYP.Domain.Models.BloodType", "DamiUserId")
+                        .HasForeignKey("DamiFYP.Domain.Models.BloodType", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -334,7 +343,7 @@ namespace DamiFYP.Persistence.Migrations
                 {
                     b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
                         .WithMany("DonationRequests")
-                        .HasForeignKey("DamiUserId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

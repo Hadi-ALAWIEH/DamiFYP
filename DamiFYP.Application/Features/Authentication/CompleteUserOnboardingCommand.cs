@@ -14,6 +14,7 @@ namespace DamiFYP.Application.Features.Authentication;
 public sealed class CompleteUserOnboardingCommand : IRequest<CompleteUserOnboardingViewModel>
 {
     public string Name { get; set; } = string.Empty;
+    [JsonIgnore]
     public string Email { get; set; } = string.Empty;
     public BusinessRole BusinessRole { get; set; } = BusinessRole.None;
     public double? Latitude { get; set; }
@@ -62,11 +63,11 @@ public sealed class CompleteUserOnboardingCommandHandler : IRequestHandler<Compl
             throw new ArgumentException("Name is required.", nameof(request.Name));
         }
 
-        var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken)
+        var user = await _context.DamiUsers.FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken)
                    ?? throw new InvalidOperationException("User profile not found.");
 
         var normalizedEmail = request.Email.Trim();
-        var emailTaken = await _context.Users
+        var emailTaken = await _context.DamiUsers
             .AsNoTracking()
             .AnyAsync(x => x.Email == normalizedEmail && x.Id != request.UserId, cancellationToken);
 

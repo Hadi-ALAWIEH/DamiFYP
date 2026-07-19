@@ -27,7 +27,7 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
     {
         var conversationIds = await _context.ConversationParticipants
             .AsNoTracking()
-            .Where(participant => participant.UserId == request.UserId)
+            .Where(participant => participant.DamiUserId == request.UserId)
             .Select(participant => participant.ConversationId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -53,20 +53,20 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                 DonationPostBloodTypeName = conversation.Match.DonationPost.BloodTypeName,
                 DonationPostQuantity = conversation.Match.DonationPost.Quantity,
                 OtherUserId = _context.ConversationParticipants
-                    .Where(participant => participant.ConversationId == conversation.Id && participant.UserId != request.UserId)
-                    .Select(participant => participant.UserId)
+                    .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
+                    .Select(participant => participant.DamiUserId)
                     .FirstOrDefault(),
                 OtherUserName = _context.ConversationParticipants
-                    .Where(participant => participant.ConversationId == conversation.Id && participant.UserId != request.UserId)
-                    .Select(participant => participant.User.Name)
+                    .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
+                    .Select(participant => participant.DamiUser.Name)
                     .FirstOrDefault() ?? string.Empty,
                 OtherUserEmail = _context.ConversationParticipants
-                    .Where(participant => participant.ConversationId == conversation.Id && participant.UserId != request.UserId)
-                    .Select(participant => participant.User.Email)
+                    .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
+                    .Select(participant => participant.DamiUser.Email)
                     .FirstOrDefault() ?? string.Empty,
                 OtherUserRole = _context.ConversationParticipants
-                    .Where(participant => participant.ConversationId == conversation.Id && participant.UserId != request.UserId)
-                    .Select(participant => participant.User.Role)
+                    .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
+                    .Select(participant => participant.DamiUser.Role)
                     .FirstOrDefault(),
                 LatestMessageContent = _context.Messages
                     .Where(message => message.ConversationParticipant.ConversationId == conversation.Id)
@@ -81,12 +81,12 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                 LatestMessageSenderUserId = _context.Messages
                     .Where(message => message.ConversationParticipant.ConversationId == conversation.Id)
                     .OrderByDescending(message => message.SentAt)
-                    .Select(message => (long?)message.ConversationParticipant.UserId)
+                    .Select(message => (long?)message.ConversationParticipant.DamiUserId)
                     .FirstOrDefault(),
                 LatestMessageSenderName = _context.Messages
                     .Where(message => message.ConversationParticipant.ConversationId == conversation.Id)
                     .OrderByDescending(message => message.SentAt)
-                    .Select(message => message.ConversationParticipant.User.Name)
+                    .Select(message => message.ConversationParticipant.DamiUser.Name)
                     .FirstOrDefault()
             })
             .ToListAsync(cancellationToken);

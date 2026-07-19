@@ -8,9 +8,9 @@ namespace DamiFYP.Application.Helpers;
 
 public class ManualAuthService(DamiContext context) : IDamiAuthService
 {
-    public async Task<User?> AuthUserAsync(long userId, string email)
+    public async Task<DamiUser?> AuthUserAsync(long userId, string email)
     {
-        var users = await context.Users.ToListAsync();
+        var users = await context.DamiUsers.ToListAsync();
         return users.Any(user => user.Id == userId && user.Email == email)
             ? users.First(user => user.Id == userId)
             : null;

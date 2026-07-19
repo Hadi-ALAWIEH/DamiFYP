@@ -26,7 +26,21 @@ builder.Configuration.AddJsonFile("Config/Development/appsettings.Development.js
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<GetAllBloodTypesQuery>());
 builder.Services.AddAutoMapper(assemblies: typeof(DamiMapper).Assembly);
 var connectionString = builder.Configuration.GetValue<string>("Local:environmentVariables:CONNECTIONSTRINGS__DB");
+
+// todo: create an extension method for this
+// builder.Services.UseNpgSqlWithSeeding(connectionString);
 builder.Services.AddNpgsql<DamiContext>(connectionString);
+// builder.Services.AddNpgsql<DamiContext>(
+//     connectionString,
+//     optionsAction: options => options.UseSeeding(
+//         (context, _) =>
+//         {
+//             context.Database.EnsureCreated();
+//             context.
+//         }
+//         )
+// );
+
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection("Keycloak"));
@@ -45,6 +59,12 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(AuthorizationPolicies.CanManageBloodTypes, policy =>
         policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+
+    options.AddPolicy(AuthorizationPolicies.CanViewAvailableDonationRequests, policy =>
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor)));
+
+    options.AddPolicy(AuthorizationPolicies.CanManageDonationPosts, policy =>
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.DonorAndSeeker)));
 });
 
 builder.Services.AddAuthentication().AddJwtBearer();
