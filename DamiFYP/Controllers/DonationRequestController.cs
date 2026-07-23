@@ -18,7 +18,6 @@ public class DonationRequestController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    // [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
     [Authorize(Roles = "Admin", Policy = AuthorizationPolicies.CanManageDonationRequests)]
     public async Task<IActionResult> GetDonationRequest(int id)
     {
@@ -34,11 +33,10 @@ public class DonationRequestController : ControllerBase
         return CreatedAtAction(nameof(GetDonationRequest), new { id = result.DonationRequest.Id }, result);
     }
 
-    [HttpPost("{id}/confirm-match")]
+    [HttpPost("confirm-match")]
     [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
-    public async Task<IActionResult> ConfirmMatch(int id, [FromBody] ConfirmDonationRequestMatchCommand command)
+    public async Task<IActionResult> ConfirmMatch([FromBody] ConfirmDonationRequestMatchCommand command)
     {
-        command.DonationRequestId = id;
         await _mediator.Send(command);
         return NoContent();
     }

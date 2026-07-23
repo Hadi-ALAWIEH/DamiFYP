@@ -12,6 +12,7 @@
         <Folder Include="Repositories\"/>
         <PackageReference Include="MediatR"/>
         <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection"/>
+        <PackageReference Include="Microsoft.AspNet.SignalR" />
     </ItemGroup>
 
     <ItemGroup>

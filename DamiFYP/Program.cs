@@ -28,18 +28,10 @@ builder.Services.AddAutoMapper(assemblies: typeof(DamiMapper).Assembly);
 var connectionString = builder.Configuration.GetValue<string>("Local:environmentVariables:CONNECTIONSTRINGS__DB");
 
 // todo: create an extension method for this
-// builder.Services.UseNpgSqlWithSeeding(connectionString);
-builder.Services.AddNpgsql<DamiContext>(connectionString);
-// builder.Services.AddNpgsql<DamiContext>(
-//     connectionString,
-//     optionsAction: options => options.UseSeeding(
-//         (context, _) =>
-//         {
-//             context.Database.EnsureCreated();
-//             context.
-//         }
-//         )
-// );
+// builder.Services.AddNpgsql<DamiContext>(connectionString);
+
+builder.Services.UseNpgSqlWithSeeding(connectionString);
+
 
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSettings"));
@@ -51,14 +43,16 @@ builder.Services.AddLogging();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthorizationPolicies.CanAccessConversations, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
+            BusinessRole.ManageAccount)));
 
     options.AddPolicy(AuthorizationPolicies.CanManageDonationRequests, policy =>
         policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Seeker, BusinessRole.ManageAccount)));
-        // policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+    // policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
 
     options.AddPolicy(AuthorizationPolicies.CanManageBloodTypes, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
+            BusinessRole.ManageAccount)));
 
     options.AddPolicy(AuthorizationPolicies.CanViewAvailableDonationRequests, policy =>
         policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor)));
@@ -212,6 +206,19 @@ builder.Services.AddScoped<IAuthorizationHandler, BusinessRoleHandler>();
 builder.Services.AddScoped<IMatchService, MatchService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DamiGlobalExceptionHandler>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+            "CorsPolicy",
+            builder =>
+                builder
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials()
+                    .WithOrigins("https://localhost:3000")
+        );
+});
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -254,6 +261,8 @@ if (app.Environment.IsDevelopment())
     );
     app.UseExceptionHandler("/errors");
 }
+
+app.MapHub<DamiHub>("/hubs/chat");
 
 app.UseHttpsRedirection();
 
