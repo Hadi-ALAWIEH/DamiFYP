@@ -209,13 +209,13 @@ builder.Services.AddExceptionHandler<DamiGlobalExceptionHandler>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
-            "CorsPolicy",
+            "ReactClient",
             builder =>
                 builder
+                    .WithOrigins("http://localhost:5173")
                     .AllowAnyMethod()
                     .AllowAnyHeader()
-                    .AllowCredentials()
-                    .WithOrigins("https://localhost:3000")
+                    // .AllowCredentials()
         );
 });
 builder.Services.AddSignalR();
@@ -266,6 +266,7 @@ app.MapHub<DamiHub>("/hubs/chat");
 
 app.UseHttpsRedirection();
 
+app.UseCors("ReactClient");
 app.UseAuthentication();
 app.UseMiddleware<CurrentUserProfileMiddleware>();
 app.UseAuthorization();
