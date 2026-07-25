@@ -10,6 +10,7 @@ using DamiFYP.Application.Helpers;
 using DamiFYP.Application.Mappers;
 using DamiFYP.Application.Features.DonationRequests;
 using DamiFYP.ExceptionHandlers.cs;
+using DamiFYP.Infrastructure.BloodAvailability;
 using DamiFYP.Persistence.Contexts;
 using DamiFYP.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,6 +37,19 @@ builder.Services.UseNpgSqlWithSeeding(connectionString);
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection("Keycloak"));
+builder.Services.Configure<BloodAvailabilityServiceOptions>(
+    builder.Configuration.GetSection("BloodAvailabilityService"));
+builder.Services.AddHttpClient<IBloodAvailabilityServiceClient, BloodAvailabilityServiceClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<BloodAvailabilityServiceOptions>>().Value;
+    if (string.IsNullOrWhiteSpace(options.BaseUrl))
+    {
+        throw new InvalidOperationException(
+            "BloodAvailabilityService:BaseUrl is not configured.");
+    }
+
+    client.BaseAddress = new Uri(options.BaseUrl);
+});
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddLogging();
@@ -59,6 +73,9 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(AuthorizationPolicies.CanManageDonationPosts, policy =>
         policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.DonorAndSeeker)));
+
+    options.AddPolicy(AuthorizationPolicies.CanViewBloodAvailabilityPredictions, policy =>
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Seeker, BusinessRole.ManageAccount)));
 });
 
 builder.Services.AddAuthentication().AddJwtBearer();

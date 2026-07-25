@@ -32,4 +32,11 @@ public class DonationPostController : ControllerBase
         return Ok(candidates);
     }
 
+    [HttpGet("get-current-user-donation-posts")]
+    [Authorize(Policy = AuthorizationPolicies.CanManageDonationPosts)]
+    public async Task<IActionResult> GetCurrentUserDonationPosts()
+    {
+        var result = await _mediator.Send(new GetCurrentUserDonationPostsQuery());
+        return Ok(result);
+    }
 }

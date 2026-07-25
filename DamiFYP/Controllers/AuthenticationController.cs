@@ -51,4 +51,10 @@ public class AuthenticationController : ControllerBase {
     [HttpGet]
     public async Task<CheckProfileExistenceViewModel> CheckProfileExistence(CancellationToken token) => await _mediator.Send(
         new CheckProfileExistenceQuery() {} , token);
+
+    [Authorize]
+    [HttpGet]
+    public async Task<UserProfile> GetUserProfile(CancellationToken token) => await _mediator.Send(
+        new GetUserProfileQuery() {} , token);
+
 }

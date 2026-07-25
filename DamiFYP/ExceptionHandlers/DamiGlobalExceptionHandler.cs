@@ -1,4 +1,5 @@
 ﻿using System.Security.Authentication;
+using DamiFYP.Infrastructure.BloodAvailability;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,6 +21,7 @@ public class DamiGlobalExceptionHandler : IExceptionHandler
         var responseStatusCode = exception switch
         {
             InvalidCredentialException => StatusCodes.Status404NotFound,
+            BloodAvailabilityServiceException => StatusCodes.Status502BadGateway,
             _ => StatusCodes.Status400BadRequest
         };
 

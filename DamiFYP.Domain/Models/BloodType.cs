@@ -18,6 +18,4 @@ public enum BloodTypeName
     BNegative,
     OPositive,
     ONegative,
-    AbPositive,
-    AbNegative
 }
