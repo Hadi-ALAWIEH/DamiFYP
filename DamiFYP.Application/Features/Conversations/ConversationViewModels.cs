@@ -34,3 +34,14 @@ public class ConversationViewModel
     public string? LatestMessageSenderName { get; set; }
 }
 
+// Pushed over SignalR (event "ConversationStarted") to both matched users the moment
+// MatchService confirms a match, so their clients can surface the new chat immediately
+// instead of having to poll GetAllConversations.
+public class ConversationStartedNotification
+{
+    public long ConversationId { get; set; }
+    public long MatchId { get; set; }
+    public long OtherUserId { get; set; }
+    public string OtherUserName { get; set; } = string.Empty;
+}
+

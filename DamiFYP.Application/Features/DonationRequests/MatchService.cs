@@ -6,7 +6,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using DamiFYP.Application.Features.Conversations;
 using DamiFYP.Application.Helpers;
+using Microsoft.AspNetCore.SignalR;
 
 namespace DamiFYP.Application.Features.DonationRequests;
 
@@ -18,12 +20,15 @@ public class MatchService : IMatchService
     private readonly DamiContext _context;
     private readonly ICurrentUserProfileService _currentUserProfileService;
     private readonly IMapper _mapper;
+    private readonly IHubContext<DamiHub> _hubContext;
 
-    public MatchService(DamiContext context, ICurrentUserProfileService currentUserProfileService, IMapper mapper)
+    public MatchService(DamiContext context, ICurrentUserProfileService currentUserProfileService, IMapper mapper,
+        IHubContext<DamiHub> hubContext)
     {
         _context = context;
         _currentUserProfileService = currentUserProfileService;
         _mapper = mapper;
+        _hubContext = hubContext;
     }
 
     public async Task<DonationRequestMatchCandidatesViewModel> GetCandidatesAsync(long donationRequestId,
@@ -109,5 +114,39 @@ public class MatchService : IMatchService
 
         await _context.SaveChangesAsync(cancellationToken);
         await tx.CommitAsync(cancellationToken);
+
+        await NotifyBothPartiesAsync(conversation.Id, match.Id, request.DamiUserId, post.DamiUserId,
+            cancellationToken);
+    }
+
+    // Pushes a "ConversationStarted" SignalR event to both matched users' personal
+    // groups (joined in DamiHub.OnConnectedAsync) so their clients can open the new
+    // chat immediately instead of waiting for the next GetAllConversations poll.
+    // Runs after the transaction commits, so it only fires once the match is durable.
+    private async Task NotifyBothPartiesAsync(long conversationId, long matchId, long seekerUserId,
+        long donorUserId, CancellationToken cancellationToken)
+    {
+        var names = await _context.DamiUsers
+            .AsNoTracking()
+            .Where(user => user.Id == seekerUserId || user.Id == donorUserId)
+            .ToDictionaryAsync(user => user.Id, user => user.Name, cancellationToken);
+
+        await _hubContext.Clients.Group(SignalRGroups.ForUser(seekerUserId)).SendAsync("ConversationStarted",
+            new ConversationStartedNotification
+            {
+                ConversationId = conversationId,
+                MatchId = matchId,
+                OtherUserId = donorUserId,
+                OtherUserName = names.GetValueOrDefault(donorUserId, string.Empty)
+            }, cancellationToken);
+
+        await _hubContext.Clients.Group(SignalRGroups.ForUser(donorUserId)).SendAsync("ConversationStarted",
+            new ConversationStartedNotification
+            {
+                ConversationId = conversationId,
+                MatchId = matchId,
+                OtherUserId = seekerUserId,
+                OtherUserName = names.GetValueOrDefault(seekerUserId, string.Empty)
+            }, cancellationToken);
     }
 }

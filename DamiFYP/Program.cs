@@ -149,6 +149,22 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 
         options.Events = new JwtBearerEvents
         {
+            // Browsers can't set an Authorization header on a WebSocket upgrade
+            // request, so the SignalR JS client instead sends the token as an
+            // "access_token" query string parameter (via accessTokenFactory).
+            // Bridge it into the normal bearer flow, but only for the chat hub's
+            // path, so query-string tokens aren't accepted on regular API routes.
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
             OnTokenValidated = context =>
             {
                 if (context.Principal?.Identity is not ClaimsIdentity identity)
@@ -279,8 +295,6 @@ if (app.Environment.IsDevelopment())
     app.UseExceptionHandler("/errors");
 }
 
-app.MapHub<DamiHub>("/hubs/chat");
-
 app.UseHttpsRedirection();
 
 app.UseCors("ReactClient");
@@ -288,5 +302,9 @@ app.UseAuthentication();
 app.UseMiddleware<CurrentUserProfileMiddleware>();
 app.UseAuthorization();
 
+// Mapped after UseAuthentication/UseAuthorization so DamiHub's [Authorize] is
+// actually enforced on the connection handshake - it was previously mapped
+// before those middlewares were registered, which left it unprotected.
+app.MapHub<DamiHub>("/hubs/chat");
 app.MapControllers();
 app.Run();

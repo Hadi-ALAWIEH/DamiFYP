@@ -22,6 +22,7 @@ public class DamiGlobalExceptionHandler : IExceptionHandler
         {
             InvalidCredentialException => StatusCodes.Status404NotFound,
             BloodAvailabilityServiceException => StatusCodes.Status502BadGateway,
+            UnauthorizedAccessException => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status400BadRequest
         };
 

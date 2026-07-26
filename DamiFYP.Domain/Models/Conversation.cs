@@ -7,5 +7,5 @@ public class Conversation
     public long MatchId { get; set; }
     public Match Match { get; set; } = null!;
 
-    ICollection<ConversationParticipant> Participants { get; set; } = new List<ConversationParticipant>();
+    public ICollection<ConversationParticipant> Participants { get; set; } = new List<ConversationParticipant>();
 }
