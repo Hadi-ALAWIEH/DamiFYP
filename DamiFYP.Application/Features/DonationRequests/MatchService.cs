@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using AutoMapper;
 using DamiFYP.Application.Features.Conversations;
 using DamiFYP.Application.Helpers;
+using DamiFYP.Infrastructure.Email;
 using Microsoft.AspNetCore.SignalR;
 
 namespace DamiFYP.Application.Features.DonationRequests;
@@ -21,14 +22,16 @@ public class MatchService : IMatchService
     private readonly ICurrentUserProfileService _currentUserProfileService;
     private readonly IMapper _mapper;
     private readonly IHubContext<DamiHub> _hubContext;
+    private readonly IEmailService _emailService;
 
     public MatchService(DamiContext context, ICurrentUserProfileService currentUserProfileService, IMapper mapper,
-        IHubContext<DamiHub> hubContext)
+        IHubContext<DamiHub> hubContext, IEmailService emailService)
     {
         _context = context;
         _currentUserProfileService = currentUserProfileService;
         _mapper = mapper;
         _hubContext = hubContext;
+        _emailService = emailService;
     }
 
     public async Task<DonationRequestMatchCandidatesViewModel> GetCandidatesAsync(long donationRequestId,
@@ -122,14 +125,22 @@ public class MatchService : IMatchService
     // Pushes a "ConversationStarted" SignalR event to both matched users' personal
     // groups (joined in DamiHub.OnConnectedAsync) so their clients can open the new
     // chat immediately instead of waiting for the next GetAllConversations poll.
-    // Runs after the transaction commits, so it only fires once the match is durable.
+    // Also emails both parties, since they might not be online to receive the
+    // SignalR event. Runs after the transaction commits, so it only fires once
+    // the match is durable.
     private async Task NotifyBothPartiesAsync(long conversationId, long matchId, long seekerUserId,
         long donorUserId, CancellationToken cancellationToken)
     {
-        var names = await _context.DamiUsers
+        var users = await _context.DamiUsers
             .AsNoTracking()
             .Where(user => user.Id == seekerUserId || user.Id == donorUserId)
-            .ToDictionaryAsync(user => user.Id, user => user.Name, cancellationToken);
+            .Select(user => new { user.Id, user.Name, user.Email })
+            .ToDictionaryAsync(user => user.Id, cancellationToken);
+
+        var seekerName = users.TryGetValue(seekerUserId, out var seeker) ? seeker.Name : string.Empty;
+        var seekerEmail = users.TryGetValue(seekerUserId, out var seekerInfo) ? seekerInfo.Email : string.Empty;
+        var donorName = users.TryGetValue(donorUserId, out var donor) ? donor.Name : string.Empty;
+        var donorEmail = users.TryGetValue(donorUserId, out var donorInfo) ? donorInfo.Email : string.Empty;
 
         await _hubContext.Clients.Group(SignalRGroups.ForUser(seekerUserId)).SendAsync("ConversationStarted",
             new ConversationStartedNotification
@@ -137,7 +148,7 @@ public class MatchService : IMatchService
                 ConversationId = conversationId,
                 MatchId = matchId,
                 OtherUserId = donorUserId,
-                OtherUserName = names.GetValueOrDefault(donorUserId, string.Empty)
+                OtherUserName = donorName
             }, cancellationToken);
 
         await _hubContext.Clients.Group(SignalRGroups.ForUser(donorUserId)).SendAsync("ConversationStarted",
@@ -146,7 +157,24 @@ public class MatchService : IMatchService
                 ConversationId = conversationId,
                 MatchId = matchId,
                 OtherUserId = seekerUserId,
-                OtherUserName = names.GetValueOrDefault(seekerUserId, string.Empty)
+                OtherUserName = seekerName
             }, cancellationToken);
+
+        await SendMatchEmailsAsync(seekerName, seekerEmail, donorName, donorEmail, cancellationToken);
+    }
+
+    // Sends the "you've been matched" notice to both the seeker and the donor.
+    private async Task SendMatchEmailsAsync(string seekerName, string seekerEmail, string donorName,
+        string donorEmail, CancellationToken cancellationToken)
+    {
+        const string subject = "You've been matched!";
+
+        await _emailService.SendEmailAsync(seekerEmail, seekerName, subject,
+            $"Hi {seekerName},\n\nYou've been matched with {donorName}. Open the app to start chatting and arrange your donation.",
+            cancellationToken);
+
+        await _emailService.SendEmailAsync(donorEmail, donorName, subject,
+            $"Hi {donorName},\n\nYou've been matched with {seekerName}. Open the app to start chatting and arrange the donation.",
+            cancellationToken);
     }
 }
