@@ -1,62 +1,24 @@
-﻿services:
-  damifyp:
-    image: damifyp
-    build:
-      context: .
-      dockerfile: DamiFYP/Dockerfile
-
-  damifyp-1:
-    image: damifyp-1
-    build:
-      context: .
-      dockerfile: DamiFYP/Dockerfile
-
-  damifyp.application:
-    image: damifyp.application
-    build:
-      context: .
-      dockerfile: DamiFYP.Application/Dockerfile
-
-  damifyp.common:
-    image: damifyp.common
-    build:
-      context: .
-      dockerfile: DamiFYP.Common/Dockerfile
-
-  damifyp.domain:
-    image: damifyp.domain
-    build:
-      context: .
-      dockerfile: DamiFYP.Domain/Dockerfile
-
-  damifyp.healthcheck:
-    image: damifyp.healthcheck
-    build:
-      context: .
-      dockerfile: DamiFYP.HealthCheck/Dockerfile
-
-  damifyp.infrastructure:
-    image: damifyp.infrastructure
-    build:
-      context: .
-      dockerfile: DamiFYP.Infrastructure/Dockerfile
-
-  damifyp.persistence:
-    image: damifyp.persistence
-    build:
-      context: .
-      dockerfile: DamiFYP.Persistence/Dockerfile
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_DB: DamiDB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+    ports:
+      - "5432:5432"
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.6.1
     container_name: keycloak
-    command: start-dev
+    command: start-dev --import-realm
     environment:
       KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN_PASSWORD: changeme
       KC_HEALTH_ENABLED: true
     volumes:
-      -
+      - ./keycloak:/opt/keycloak/data/import
     ports:
       - "8080:8080"
     user: root

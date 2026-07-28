@@ -11,6 +11,7 @@ using DamiFYP.Application.Mappers;
 using DamiFYP.Application.Features.DonationRequests;
 using DamiFYP.ExceptionHandlers.cs;
 using DamiFYP.Infrastructure.BloodAvailability;
+using DamiFYP.Infrastructure.Email;
 using DamiFYP.Persistence.Contexts;
 using DamiFYP.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,6 +40,12 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSett
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection("Keycloak"));
 builder.Services.Configure<BloodAvailabilityServiceOptions>(
     builder.Configuration.GetSection("BloodAvailabilityService"));
+builder.Services.AddScoped<IEmailService>(_ =>
+{
+    var emailOptions = new SmtpEmailOptions();
+    builder.Configuration.GetSection("Email").Bind(emailOptions);
+    return new SmtpEmailService(emailOptions);
+});
 builder.Services.AddHttpClient<IBloodAvailabilityServiceClient, BloodAvailabilityServiceClient>((sp, client) =>
 {
     var options = sp.GetRequiredService<IOptions<BloodAvailabilityServiceOptions>>().Value;

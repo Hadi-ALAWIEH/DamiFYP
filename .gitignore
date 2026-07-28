@@ -3,3 +3,12 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+
+# keycloak/ still fully ignored (never committed with real data)
+keycloak/
+
+# NOTE: DamiFYP/appsettings.json, DamiFYP/Config/Development/appsettings.Development.json,
+# and compose.yaml are intentionally NOT listed here anymore. They are tracked with
+# safe placeholder values and marked --skip-worktree so git ignores local edits
+# containing real secrets. Do NOT run `git update-index --no-skip-worktree` on them
+# without first replacing their real content with placeholders again.
