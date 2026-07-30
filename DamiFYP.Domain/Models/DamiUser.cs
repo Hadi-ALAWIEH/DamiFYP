@@ -1,4 +1,4 @@
-﻿namespace DamiFYP.Domain.Models;
+namespace DamiFYP.Domain.Models;
 
 public class DamiUser
 {
@@ -19,6 +19,7 @@ public class DamiUser
     public ICollection<DonationRequest> DonationRequests { get; set; } = new List<DonationRequest>();
     public ICollection<DonationPost> DonationPosts { get; set; } = new List<DonationPost>();
     public ICollection<ConversationParticipant> ConversationParticipants { get; set; } = new List<ConversationParticipant>();
+    public ICollection<BotMessage> BotMessages { get; set; } = new List<BotMessage>();
 
     // public ICollection<Match> MatchesAsDonor { get; set; } = new List<Match>();
     // public ICollection<Message> SentMessages { get; set; } = new List<Message>();

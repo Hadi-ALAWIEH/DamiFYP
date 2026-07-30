@@ -8,5 +8,6 @@ public static class AuthorizationPolicies
     public const string CanManageBloodTypes = "CanManageBloodTypes";
     public const string CanViewAvailableDonationRequests = "CanViewAvailableDonationRequests";
     public const string CanViewBloodAvailabilityPredictions = "CanViewBloodAvailabilityPredictions";
+    public const string CanUseAssistant = "CanUseAssistant";
 }
 

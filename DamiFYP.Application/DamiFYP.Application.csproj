@@ -8,25 +8,26 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Folder Include="Constants\"/>
-        <Folder Include="Repositories\"/>
-        <PackageReference Include="MediatR"/>
-        <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection"/>
+        <Folder Include="Constants\" />
+        <Folder Include="Repositories\" />
+        <PackageReference Include="Google.GenAI" />
+        <PackageReference Include="MediatR" />
+        <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" />
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="Microsoft.AspNetCore.Http.Abstractions"/>
+        <Reference Include="Microsoft.AspNetCore.Http.Abstractions" />
         <Reference Include="Microsoft.AspNetCore.Mvc.Abstractions">
             <HintPath>..\..\..\..\..\Program Files\dotnet\shared\Microsoft.AspNetCore.App\8.0.24\Microsoft.AspNetCore.Mvc.Abstractions.dll</HintPath>
         </Reference>
     </ItemGroup>
 
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
-        <ProjectReference Include="..\DamiFYP.Common\DamiFYP.Common.csproj"/>
-        <ProjectReference Include="..\DamiFYP.Domain\DamiFYP.Domain.csproj"/>
-        <ProjectReference Include="..\DamiFYP.Infrastructure\DamiFYP.Infrastructure.csproj"/>
-        <ProjectReference Include="..\DamiFYP.Persistence\DamiFYP.Persistence.csproj"/>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+        <ProjectReference Include="..\DamiFYP.Common\DamiFYP.Common.csproj" />
+        <ProjectReference Include="..\DamiFYP.Domain\DamiFYP.Domain.csproj" />
+        <ProjectReference Include="..\DamiFYP.Infrastructure\DamiFYP.Infrastructure.csproj" />
+        <ProjectReference Include="..\DamiFYP.Persistence\DamiFYP.Persistence.csproj" />
     </ItemGroup>
 
     <ItemGroup>
