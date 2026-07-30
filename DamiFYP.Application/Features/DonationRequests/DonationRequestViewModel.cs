@@ -26,6 +26,13 @@ public class DonationPostViewModel
     public string DonorAddress { get; set; } = "";
     public string? BloodTypeName { get; set; }
     public int? Quantity { get; set; }
+
+    // True when this specific donor has already been confirmed as a match for
+    // the donation request this candidate list was fetched for. Lets the UI
+    // show "Matched" and disable the button for that one donor, even after a
+    // page reload, instead of re-deriving it from in-memory state that's lost
+    // on refresh.
+    public bool IsMatched { get; set; }
 }
 
 public class DonationRequestMatchCandidatesViewModel

@@ -36,6 +36,26 @@ public class GetConversationMessagesQueryHandler
             throw new UnauthorizedAccessException("User is not a participant of this conversation.");
         }
 
+        // Opening a conversation is what "reading" it means here. Flip IsRead on
+        // every message the OTHER participant sent that isn't already marked read,
+        // so the unread badge (computed from this flag in GetAllConversationsRequest)
+        // stays correct after logout/login instead of relying on anything client-side.
+        var unreadMessages = await _context.Messages
+            .Where(message => message.ConversationParticipant.ConversationId == request.ConversationId
+                               && message.ConversationParticipant.DamiUserId != request.RequestingUserId
+                               && !message.IsRead)
+            .ToListAsync(cancellationToken);
+
+        if (unreadMessages.Count > 0)
+        {
+            foreach (var message in unreadMessages)
+            {
+                message.IsRead = true;
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
         return await _context.Messages
             .AsNoTracking()
             .Where(message => message.ConversationParticipant.ConversationId == request.ConversationId)
