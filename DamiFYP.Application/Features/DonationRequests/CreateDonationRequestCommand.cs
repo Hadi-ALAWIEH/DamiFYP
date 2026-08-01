@@ -67,7 +67,8 @@ public class CreateDonationRequestCommandHandler : IRequestHandler<CreateDonatio
 				Urgency = entity.Urgency,
 				Status = entity.Status,
 				CreatedAt = entity.CreatedAt,
-				NeededByDate = entity.NeededByDate
+				NeededByDate = entity.NeededByDate,
+				Address = entity.Address
 			},
 			Candidates = candidates.Candidates
 		};
