@@ -28,8 +28,12 @@ public class
 
         return donationPosts.Select(dp => new DonationPostViewModel()
         {
-            BloodTypeName = dp.BloodTypeName.ToString(),
-            Quantity = dp.Quantity,
+            DonationPostId = dp.Id,
+            BloodTypeName  = dp.BloodTypeName.ToString(),
+            Quantity       = dp.Quantity,
+            DonorAddress   = dp.Address ?? "",
+            Latitude       = dp.Latitude,
+            Longitude      = dp.Longitude,
         }).ToList();
     }
 }
