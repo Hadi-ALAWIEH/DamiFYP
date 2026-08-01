@@ -87,7 +87,11 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                     .Where(message => message.ConversationParticipant.ConversationId == conversation.Id)
                     .OrderByDescending(message => message.SentAt)
                     .Select(message => message.ConversationParticipant.DamiUser.Name)
-                    .FirstOrDefault()
+                    .FirstOrDefault(),
+                IsUnread = _context.Messages
+                    .Any(message => message.ConversationParticipant.ConversationId == conversation.Id
+                                     && message.ConversationParticipant.DamiUserId != request.UserId
+                                     && !message.IsRead)
             })
             .ToListAsync(cancellationToken);
 
@@ -114,7 +118,8 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                     LatestMessageContent = row.LatestMessageContent,
                     LatestMessageSentAt = row.LatestMessageSentAt,
                     LatestMessageSenderUserId = row.LatestMessageSenderUserId,
-                    LatestMessageSenderName = row.LatestMessageSenderName
+                    LatestMessageSenderName = row.LatestMessageSenderName,
+                    IsUnread = row.IsUnread
                 })
                 .ToList()
         };
@@ -140,6 +145,7 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
         public DateTime? LatestMessageSentAt { get; set; }
         public long? LatestMessageSenderUserId { get; set; }
         public string? LatestMessageSenderName { get; set; }
+        public bool IsUnread { get; set; }
     }
 }
 

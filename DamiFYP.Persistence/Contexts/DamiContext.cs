@@ -1,4 +1,4 @@
-﻿using DamiFYP.Domain.Models;
+using DamiFYP.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DamiFYP.Persistence.Contexts;
@@ -17,6 +17,7 @@ public class DamiContext : DbContext
     public DbSet<ConversationParticipant> ConversationParticipants => Set<ConversationParticipant>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<BloodType> BloodTypes => Set<BloodType>();
+    public DbSet<BotMessage> BotMessages => Set<BotMessage>();
 
     // public DbSet<Organization> Organizations => Set<Organization>();
     // public DbSet<BloodInventory> BloodInventories => Set<BloodInventory>();
@@ -94,6 +95,23 @@ public class DamiContext : DbContext
                 .WithMany(x => x.Messages)
                 .HasForeignKey(x => x.ConversationParticipantId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<BotMessage>(entity =>
+        {
+            entity.ToTable("BotMessage");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Content).IsRequired();
+            entity.Property(x => x.Role).IsRequired();
+            entity.Property(x => x.SentAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(x => x.DamiUser)
+                .WithMany(x => x.BotMessages)
+                .HasForeignKey(x => x.DamiUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.DamiUserId, x.SentAt });
         });
 
         // modelBuilder.Entity<BloodType>(entity =>

@@ -76,12 +76,46 @@ public class DamiHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, SignalRGroups.ForConversation(conversationId));
 
+        // GetConversationMessagesQuery just marked the other participant's messages
+        // IsRead = true as a side effect of this call. The user's OTHER connections
+        // (e.g. the app-wide badge connection ConversationsProvider keeps open) are
+        // not in the conversation's group, so they'd never see that via ReceiveMessage
+        // — push it straight to this user's personal group instead so the sidebar
+        // badge updates immediately instead of waiting for the next full reload.
+        await Clients.Group(SignalRGroups.ForUser(profile.UserId))
+            .SendAsync("ConversationRead", new { conversationId });
+
         _logger.LogInformation(
             "Connection {ConnectionId} joined conversation {ConversationId}",
             Context.ConnectionId,
             conversationId);
 
         return history;
+    }
+
+    // Joins the caller's connection to a conversation's group for live message
+    // delivery WITHOUT fetching history or marking anything as read. Used by
+    // ConversationsProvider (the app-wide badge connection) to subscribe to
+    // every one of the user's conversations up front so it hears live
+    // ReceiveMessage/ConversationRead pushes — subscribing to all of them the
+    // moment the app boots must NOT count as having read them, unlike
+    // JoinConversation below, which is the real "user opened this chat" signal.
+    public async Task SubscribeToConversation(long conversationId)
+    {
+        var profile = await RequireCurrentUserProfileAsync();
+
+        var isParticipant = await _mediator.Send(new IsConversationParticipantQuery
+        {
+            ConversationId = conversationId,
+            UserId = profile.UserId
+        });
+
+        if (!isParticipant)
+        {
+            throw new HubException("You are not a participant of this conversation.");
+        }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, SignalRGroups.ForConversation(conversationId));
     }
 
     public async Task LeaveConversation(long conversationId)

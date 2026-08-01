@@ -32,6 +32,12 @@ public class ConversationViewModel
     public DateTime? LatestMessageSentAt { get; set; }
     public long? LatestMessageSenderUserId { get; set; }
     public string? LatestMessageSenderName { get; set; }
+
+    // True when this conversation has at least one message from the OTHER
+    // participant that the current user hasn't opened yet (Message.IsRead).
+    // Persisted server-side, so it's correct on first load — including right
+    // after logging back in — instead of being derived from client-only state.
+    public bool IsUnread { get; set; }
 }
 
 // Pushed over SignalR (event "ConversationStarted") to both matched users the moment

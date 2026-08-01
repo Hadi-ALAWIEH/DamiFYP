@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using DamiFYP;
 using DamiFYP.Application.Features.BloodType;
+using DamiFYP.Application.Features.BotAssistant;
 using DamiFYP.Application.Authorization;
 using DamiFYP.Domain.Models;
 using DamiFYP.Application.Filters;
@@ -16,9 +17,11 @@ using DamiFYP.Persistence.Contexts;
 using DamiFYP.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using System.Threading.RateLimiting;
 
 
 
@@ -49,6 +52,34 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSett
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection("Keycloak"));
 builder.Services.Configure<BloodAvailabilityServiceOptions>(
     builder.Configuration.GetSection("BloodAvailabilityService"));
+builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
+builder.Services.AddSingleton<AssistantRateLimiter>();
+builder.Services.AddScoped<IAssistantService, GeminiAssistantService>();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Per-user (or per-IP if somehow unauthenticated) throttling on the
+    // assistant's send-message endpoint — keeps usage fair between people;
+    // AssistantRateLimiter (registered above) separately protects the
+    // shared Gemini quota app-wide.
+    options.AddPolicy(AssistantRateLimiterPolicy.Endpoint, httpContext =>
+    {
+        var profile = httpContext.GetUserProfile();
+        var partitionKey = profile != null
+            ? $"assistant-user-{profile.UserId}"
+            : $"assistant-anon-{httpContext.Connection.RemoteIpAddress}";
+
+        return RateLimitPartition.GetSlidingWindowLimiter(partitionKey, _ => new SlidingWindowRateLimiterOptions
+        {
+            PermitLimit = 8,
+            Window = TimeSpan.FromMinutes(1),
+            SegmentsPerWindow = 4,
+            QueueLimit = 0,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+        });
+    });
+});
 builder.Services.AddScoped<IEmailService>(_ =>
 {
     var emailOptions = new SmtpEmailOptions();
@@ -93,15 +124,16 @@ builder.Services.AddAuthorization(options =>
            BusinessRole.ManageAccount)));
 
 
-
    options.AddPolicy(AuthorizationPolicies.CanViewAvailableDonationRequests, policy =>
        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor)));
 
 
+   options.AddPolicy(AuthorizationPolicies.CanUseAssistant, policy =>
+        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
+            BusinessRole.DonorAndSeeker, BusinessRole.ManageAccount)));
 
-   options.AddPolicy(AuthorizationPolicies.CanManageDonationPosts, policy =>
+  options.AddPolicy(AuthorizationPolicies.CanManageDonationPosts, policy =>
        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.DonorAndSeeker)));
-
 
 
    options.AddPolicy(AuthorizationPolicies.CanViewBloodAvailabilityPredictions, policy =>
@@ -375,6 +407,9 @@ app.UseCors("ReactClient");
 app.UseAuthentication();
 app.UseMiddleware<CurrentUserProfileMiddleware>();
 app.UseAuthorization();
+// After CurrentUserProfileMiddleware so the assistant policy above can key
+// its per-user bucket off the resolved profile instead of falling back to IP.
+app.UseRateLimiter();
 
 
 

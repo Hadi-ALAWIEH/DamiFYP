@@ -50,6 +50,15 @@ public class MatchService : IMatchService
         if (request == null)
             return new DonationRequestMatchCandidatesViewModel();
 
+        // Donor posts already matched to this request — used to flag IsMatched
+        // below so a donor who was confirmed in an earlier session still shows
+        // as "Matched" (not a fresh "Confirm Match" button) after a reload.
+        var matchedPostIds = await _context.Matches
+            .AsNoTracking()
+            .Where(m => m.DonationRequestId == donationRequestId)
+            .Select(m => m.DonationPostId)
+            .ToListAsync(cancellationToken);
+
         var donationPostViewModels = await _context.DonationPosts
             .AsNoTracking()
             .Where(p => p.BloodTypeName == request.BloodTypeName)
@@ -62,7 +71,8 @@ public class MatchService : IMatchService
                 DonorName = p.DamiUser.Name,
                 DonorAddress = "",
                 BloodTypeName = p.BloodTypeName.ToString(),
-                Quantity = p.Quantity
+                Quantity = p.Quantity,
+                IsMatched = matchedPostIds.Contains(p.Id)
             })
             .ToListAsync(cancellationToken);
 
@@ -75,12 +85,17 @@ public class MatchService : IMatchService
 
     public async Task ConfirmMatch(long donationRequestId, long donationPostId, CancellationToken cancellationToken)
     {
-        var exists = await _context.Matches
+        // A given donor can only be matched to a given request once. This is the
+        // authoritative, persisted guard (backed by the Matches table itself,
+        // not a derived status flag) — re-submitting "Confirm Match" for the
+        // same (request, donor) pair is a no-op instead of creating a second
+        // Match/Conversation and re-sending the "you've been matched" email.
+        var alreadyMatched = await _context.Matches
             .AsNoTracking()
             .AnyAsync(m => m.DonationPostId == donationPostId && m.DonationRequestId == donationRequestId,
                 cancellationToken);
 
-        if (exists)
+        if (alreadyMatched)
             return;
 
         var request = await _context.DonationRequests
