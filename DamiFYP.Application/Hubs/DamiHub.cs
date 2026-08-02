@@ -153,6 +153,31 @@ public class DamiHub : Hub
         return messageViewModel;
     }
 
+    // Broadcasts the caller's current GPS position to the other participant in the
+    // conversation's group. Called every few seconds while the donor has live-location
+    // sharing switched on. Uses OthersInGroup so the sender doesn't echo to themselves.
+    public async Task ShareLocation(long conversationId, double latitude, double longitude)
+    {
+        var profile = await RequireCurrentUserProfileAsync();
+
+        await Clients.OthersInGroup(SignalRGroups.ForConversation(conversationId))
+            .SendAsync("LocationUpdate", new
+            {
+                conversationId,
+                latitude,
+                longitude,
+                senderUserId = profile.UserId,
+            });
+    }
+
+    // Tells the other participant that the donor stopped sharing so the map panel
+    // can collapse on the seeker's side.
+    public async Task StopSharingLocation(long conversationId)
+    {
+        await Clients.OthersInGroup(SignalRGroups.ForConversation(conversationId))
+            .SendAsync("LocationStopped", new { conversationId });
+    }
+
     // MediatR handlers throw UnauthorizedAccessException/ArgumentException for bad
     // requests; those need translating to HubException so the message actually
     // reaches the client instead of being swallowed as a generic connection error.
