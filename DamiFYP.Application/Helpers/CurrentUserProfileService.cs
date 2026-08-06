@@ -121,7 +121,7 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
             Email = damiUser.Email,
             Name = damiUser.Name,
             BusinessRole = damiUser.Role,
-            BloodTypeName = damiUser.BloodType?.ToString(),
+            BloodTypeName = Enum.GetName(typeof(BloodTypeName), damiUser.BloodType.BloodTypeName),
             Latitude = damiUser.Latitude,
             Longitude = damiUser.Longitude,
             IsAvailable = damiUser.IsAvailable,

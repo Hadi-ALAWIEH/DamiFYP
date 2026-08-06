@@ -24,6 +24,8 @@ using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Threading.RateLimiting;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers(options => options.Filters.Add<ExampleFilter>());
 builder.Services.AddEndpointsApiExplorer();
@@ -33,10 +35,17 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Ge
 builder.Services.AddAutoMapper(assemblies: typeof(DamiMapper).Assembly);
 var connectionString = builder.Configuration.GetValue<string>("Local:environmentVariables:CONNECTIONSTRINGS__DB");
 
+
+
 // todo: create an extension method for this
 // builder.Services.AddNpgsql<DamiContext>(connectionString);
 
+
+
 builder.Services.UseNpgSqlWithSeeding(connectionString);
+
+
+
 
 
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
@@ -82,14 +91,16 @@ builder.Services.AddScoped<IEmailService>(_ =>
 });
 builder.Services.AddHttpClient<IBloodAvailabilityServiceClient, BloodAvailabilityServiceClient>((sp, client) =>
 {
-    var options = sp.GetRequiredService<IOptions<BloodAvailabilityServiceOptions>>().Value;
-    if (string.IsNullOrWhiteSpace(options.BaseUrl))
-    {
-        throw new InvalidOperationException(
-            "BloodAvailabilityService:BaseUrl is not configured.");
-    }
+   var options = sp.GetRequiredService<IOptions<BloodAvailabilityServiceOptions>>().Value;
+   if (string.IsNullOrWhiteSpace(options.BaseUrl))
+   {
+       throw new InvalidOperationException(
+           "BloodAvailabilityService:BaseUrl is not configured.");
+   }
 
-    client.BaseAddress = new Uri(options.BaseUrl);
+
+
+   client.BaseAddress = new Uri(options.BaseUrl);
 });
 builder.Services.AddHttpClient<IFaceVerificationService, FaceVerificationServiceClient>((sp, client) =>
 {
@@ -106,35 +117,48 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddLogging();
 
+
+
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(AuthorizationPolicies.CanAccessConversations, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
-            BusinessRole.ManageAccount)));
+   options.AddPolicy(AuthorizationPolicies.CanAccessConversations, policy =>
+       policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
+           BusinessRole.ManageAccount, BusinessRole.DonorAndSeeker)));
 
-    options.AddPolicy(AuthorizationPolicies.CanManageDonationRequests, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Seeker, BusinessRole.ManageAccount)));
-    // policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
 
-    options.AddPolicy(AuthorizationPolicies.CanManageBloodTypes, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
-            BusinessRole.ManageAccount)));
 
-    options.AddPolicy(AuthorizationPolicies.CanViewAvailableDonationRequests, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor)));
+   options.AddPolicy(AuthorizationPolicies.CanManageDonationRequests, policy =>
+       policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Seeker, BusinessRole.ManageAccount, BusinessRole.DonorAndSeeker)));
+   // policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker, BusinessRole.ManageAccount)));
 
-    options.AddPolicy(AuthorizationPolicies.CanManageDonationPosts, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.DonorAndSeeker)));
 
-    options.AddPolicy(AuthorizationPolicies.CanViewBloodAvailabilityPredictions, policy =>
-        policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Seeker, BusinessRole.ManageAccount)));
 
-    options.AddPolicy(AuthorizationPolicies.CanUseAssistant, policy =>
+   options.AddPolicy(AuthorizationPolicies.CanManageBloodTypes, policy =>
+       policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
+           BusinessRole.ManageAccount)));
+
+
+   options.AddPolicy(AuthorizationPolicies.CanViewAvailableDonationRequests, policy =>
+       policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor)));
+
+
+   options.AddPolicy(AuthorizationPolicies.CanUseAssistant, policy =>
         policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.Seeker,
             BusinessRole.DonorAndSeeker, BusinessRole.ManageAccount)));
+
+  options.AddPolicy(AuthorizationPolicies.CanManageDonationPosts, policy =>
+       policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Donor, BusinessRole.DonorAndSeeker)));
+
+
+   options.AddPolicy(AuthorizationPolicies.CanViewBloodAvailabilityPredictions, policy =>
+       policy.Requirements.Add(new BusinessRoleRequirement(BusinessRole.Seeker, BusinessRole.ManageAccount, BusinessRole.DonorAndSeeker)));
 });
 
+
+
 builder.Services.AddAuthentication().AddJwtBearer();
+
+
 
 // todo: keep for if you would like to use manual token issuing
 // builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
@@ -154,6 +178,8 @@ builder.Services.AddAuthentication().AddJwtBearer();
 //         };
 //     });
 
+
+
 // builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
 //     .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
 //     {
@@ -171,120 +197,148 @@ builder.Services.AddAuthentication().AddJwtBearer();
 //         };
 //     });
 
+
+
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
-    .Configure<IOptions<KeycloakOptions>>((options, keycloakOptions) =>
-    {
-        var kc = keycloakOptions.Value;
+   .Configure<IOptions<KeycloakOptions>>((options, keycloakOptions) =>
+   {
+       var kc = keycloakOptions.Value;
 
-        if (!string.IsNullOrWhiteSpace(kc.Audience))
-        {
-            options.Audience = kc.Audience;
-        }
 
-        if (!string.IsNullOrWhiteSpace(kc.Authority))
-        {
-            options.Authority = kc.Authority;
-        }
 
-        // if (!string.IsNullOrWhiteSpace(kc.ClientId))
-        // {
-        //     options.Audience = kc.ClientId;
-        // }
+       if (!string.IsNullOrWhiteSpace(kc.Audience))
+       {
+           options.Audience = kc.Audience;
+       }
 
-        if (!string.IsNullOrWhiteSpace(kc.MetadataAddress))
-        {
-            options.MetadataAddress = kc.MetadataAddress;
-        }
 
-        options.RequireHttpsMetadata = kc.RequireHttpsMetadata;
 
-        options.TokenValidationParameters ??= new TokenValidationParameters();
-        options.TokenValidationParameters.ValidateIssuer = true;
-        options.TokenValidationParameters.ValidateAudience = true;
-        options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
+       if (!string.IsNullOrWhiteSpace(kc.Authority))
+       {
+           options.Authority = kc.Authority;
+       }
 
-        options.Events = new JwtBearerEvents
-        {
-            // Browsers can't set an Authorization header on a WebSocket upgrade
-            // request, so the SignalR JS client instead sends the token as an
-            // "access_token" query string parameter (via accessTokenFactory).
-            // Bridge it into the normal bearer flow, but only for the chat hub's
-            // path, so query-string tokens aren't accepted on regular API routes.
-            OnMessageReceived = context =>
-            {
-                var accessToken = context.Request.Query["access_token"];
-                var path = context.HttpContext.Request.Path;
-                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
-                {
-                    context.Token = accessToken;
-                }
 
-                return Task.CompletedTask;
-            },
-            OnTokenValidated = context =>
-            {
-                if (context.Principal?.Identity is not ClaimsIdentity identity)
-                {
-                    return Task.CompletedTask;
-                }
 
-                var realmAccess = context.Principal.FindFirst("realm_access")?.Value;
-                if (!string.IsNullOrWhiteSpace(realmAccess))
-                {
-                    using var realmDoc = JsonDocument.Parse(realmAccess);
-                    if (realmDoc.RootElement.TryGetProperty("roles", out var roles))
-                    {
-                        foreach (var role in roles.EnumerateArray())
-                        {
-                            var roleName = role.GetString();
-                            if (!string.IsNullOrWhiteSpace(roleName))
-                            {
-                                identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
-                            }
-                        }
-                    }
-                }
+       // if (!string.IsNullOrWhiteSpace(kc.ClientId))
+       // {
+       //     options.Audience = kc.ClientId;
+       // }
 
-                var resourceAccess = context.Principal.FindFirst("resource_access")?.Value;
-                if (!string.IsNullOrWhiteSpace(resourceAccess) && !string.IsNullOrWhiteSpace(kc.Audience))
-                {
-                    using var resourceDoc = JsonDocument.Parse(resourceAccess);
-                    if (resourceDoc.RootElement.TryGetProperty(kc.Audience, out var client) &&
-                        client.TryGetProperty("roles", out var roles))
-                    {
-                        foreach (var role in roles.EnumerateArray())
-                        {
-                            var roleName = role.GetString();
-                            if (!string.IsNullOrWhiteSpace(roleName))
-                            {
-                                identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
-                            }
-                        }
-                    }
-                }
 
-                // Parse roles from damifyp-client resource_access claim
-                if (!string.IsNullOrWhiteSpace(resourceAccess) && !string.IsNullOrWhiteSpace(kc.ClientId))
-                {
-                    using var resourceDoc = JsonDocument.Parse(resourceAccess);
-                    if (resourceDoc.RootElement.TryGetProperty(kc.ClientId, out var client) &&
-                        client.TryGetProperty("roles", out var roles))
-                    {
-                        foreach (var role in roles.EnumerateArray())
-                        {
-                            var roleName = role.GetString();
-                            if (!string.IsNullOrWhiteSpace(roleName))
-                            {
-                                identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
-                            }
-                        }
-                    }
-                }
 
-                return Task.CompletedTask;
-            }
-        };
-    });
+       if (!string.IsNullOrWhiteSpace(kc.MetadataAddress))
+       {
+           options.MetadataAddress = kc.MetadataAddress;
+       }
+
+
+
+       options.RequireHttpsMetadata = kc.RequireHttpsMetadata;
+
+
+
+       options.TokenValidationParameters ??= new TokenValidationParameters();
+       options.TokenValidationParameters.ValidateIssuer = true;
+       options.TokenValidationParameters.ValidateAudience = true;
+       options.TokenValidationParameters.RoleClaimType = ClaimTypes.Role;
+
+
+
+       options.Events = new JwtBearerEvents
+       {
+           // Browsers can't set an Authorization header on a WebSocket upgrade
+           // request, so the SignalR JS client instead sends the token as an
+           // "access_token" query string parameter (via accessTokenFactory).
+           // Bridge it into the normal bearer flow, but only for the chat hub's
+           // path, so query-string tokens aren't accepted on regular API routes.
+           OnMessageReceived = context =>
+           {
+               var accessToken = context.Request.Query["access_token"];
+               var path = context.HttpContext.Request.Path;
+               if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/chat"))
+               {
+                   context.Token = accessToken;
+               }
+
+
+
+               return Task.CompletedTask;
+           },
+           OnTokenValidated = context =>
+           {
+               if (context.Principal?.Identity is not ClaimsIdentity identity)
+               {
+                   return Task.CompletedTask;
+               }
+
+
+
+               var realmAccess = context.Principal.FindFirst("realm_access")?.Value;
+               if (!string.IsNullOrWhiteSpace(realmAccess))
+               {
+                   using var realmDoc = JsonDocument.Parse(realmAccess);
+                   if (realmDoc.RootElement.TryGetProperty("roles", out var roles))
+                   {
+                       foreach (var role in roles.EnumerateArray())
+                       {
+                           var roleName = role.GetString();
+                           if (!string.IsNullOrWhiteSpace(roleName))
+                           {
+                               identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                           }
+                       }
+                   }
+               }
+
+
+
+               var resourceAccess = context.Principal.FindFirst("resource_access")?.Value;
+               if (!string.IsNullOrWhiteSpace(resourceAccess) && !string.IsNullOrWhiteSpace(kc.Audience))
+               {
+                   using var resourceDoc = JsonDocument.Parse(resourceAccess);
+                   if (resourceDoc.RootElement.TryGetProperty(kc.Audience, out var client) &&
+                       client.TryGetProperty("roles", out var roles))
+                   {
+                       foreach (var role in roles.EnumerateArray())
+                       {
+                           var roleName = role.GetString();
+                           if (!string.IsNullOrWhiteSpace(roleName))
+                           {
+                               identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                           }
+                       }
+                   }
+               }
+
+
+
+               // Parse roles from damifyp-client resource_access claim
+               if (!string.IsNullOrWhiteSpace(resourceAccess) && !string.IsNullOrWhiteSpace(kc.ClientId))
+               {
+                   using var resourceDoc = JsonDocument.Parse(resourceAccess);
+                   if (resourceDoc.RootElement.TryGetProperty(kc.ClientId, out var client) &&
+                       client.TryGetProperty("roles", out var roles))
+                   {
+                       foreach (var role in roles.EnumerateArray())
+                       {
+                           var roleName = role.GetString();
+                           if (!string.IsNullOrWhiteSpace(roleName))
+                           {
+                               identity.AddClaim(new Claim(ClaimTypes.Role, roleName));
+                           }
+                       }
+                   }
+               }
+
+
+
+               return Task.CompletedTask;
+           }
+       };
+   });
+
+
 
 builder.Services.AddScoped<ITokenService, TokenGeneratorService>();
 builder.Services.AddScoped<IDamiAuthService, ManualAuthService>();
@@ -297,61 +351,71 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<DamiGlobalExceptionHandler>();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(
-            "ReactClient",
-            builder =>
-                builder
-                    .WithOrigins("http://localhost:5173")
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    // .AllowCredentials()
-        );
+   options.AddPolicy(
+           "ReactClient",
+           builder =>
+               builder
+                   .WithOrigins("http://localhost:5173")
+                   .AllowAnyMethod()
+                   .AllowAnyHeader()
+                   // .AllowCredentials()
+       );
 });
 builder.Services.AddSignalR();
 
+
+
 var app = builder.Build();
+
+
 
 var oauth2Section = builder.Configuration.GetSection("OAuth2");
 var oauth2Scopes = oauth2Section.GetSection("Scopes").Get<Dictionary<string, string>>()
-                   ?? new Dictionary<string, string>
-                   {
-                       ["openid"] = "OpenID",
-                       ["profile"] = "Profile"
-                   };
+                  ?? new Dictionary<string, string>
+                  {
+                      ["openid"] = "OpenID",
+                      ["profile"] = "Profile"
+                  };
+
+
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-        {
-            options
-                .WithTitle("DamiFYP API")
-                .WithTheme(ScalarTheme.Mars)
-                .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
-                .AddPreferredSecuritySchemes("OAuth2")
-                .AddOAuth2Flows("OAuth2", flows =>
-                {
-                    flows.AuthorizationCode = new AuthorizationCodeFlow()
-                    {
-                        AuthorizationUrl = oauth2Section.GetValue<string>("AuthorizationUrl"),
-                        TokenUrl = oauth2Section.GetValue<string>("TokenUrl"),
-                        RedirectUri = oauth2Section.GetValue<string>("RedirectUri"),
-                        SelectedScopes = oauth2Scopes.Keys.ToList(),
-                        ClientId = oauth2Section.GetValue<string>("ClientId"),
-                        ClientSecret = oauth2Section.GetValue<string>("ClientSecret"),
-                        Pkce = Pkce.Sha256,
-                        CredentialsLocation = CredentialsLocation.Body
-                    };
-                })
-                // .AddPreferredSecuritySchemes("Bearer")
-                .AddHttpAuthentication("Bearer", auth => { auth.Token = ""; })
-                .EnablePersistentAuthentication();
-        }
-    );
-    app.UseExceptionHandler("/errors");
+   app.MapOpenApi();
+   app.MapScalarApiReference(options =>
+       {
+           options
+               .WithTitle("DamiFYP API")
+               .WithTheme(ScalarTheme.Mars)
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+               .AddPreferredSecuritySchemes("OAuth2")
+               .AddOAuth2Flows("OAuth2", flows =>
+               {
+                   flows.AuthorizationCode = new AuthorizationCodeFlow()
+                   {
+                       AuthorizationUrl = oauth2Section.GetValue<string>("AuthorizationUrl"),
+                       TokenUrl = oauth2Section.GetValue<string>("TokenUrl"),
+                       RedirectUri = oauth2Section.GetValue<string>("RedirectUri"),
+                       SelectedScopes = oauth2Scopes.Keys.ToList(),
+                       ClientId = oauth2Section.GetValue<string>("ClientId"),
+                       ClientSecret = oauth2Section.GetValue<string>("ClientSecret"),
+                       Pkce = Pkce.Sha256,
+                       CredentialsLocation = CredentialsLocation.Body
+                   };
+               })
+               // .AddPreferredSecuritySchemes("Bearer")
+               .AddHttpAuthentication("Bearer", auth => { auth.Token = ""; })
+               .EnablePersistentAuthentication();
+       }
+   );
+   app.UseExceptionHandler("/errors");
 }
 
+
+
 app.UseHttpsRedirection();
+
+
 
 app.UseCors("ReactClient");
 app.UseAuthentication();
@@ -360,6 +424,8 @@ app.UseAuthorization();
 // After CurrentUserProfileMiddleware so the assistant policy above can key
 // its per-user bucket off the resolved profile instead of falling back to IP.
 app.UseRateLimiter();
+
+
 
 // Mapped after UseAuthentication/UseAuthorization so DamiHub's [Authorize] is
 // actually enforced on the connection handshake - it was previously mapped
