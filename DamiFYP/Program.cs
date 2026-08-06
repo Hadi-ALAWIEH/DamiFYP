@@ -13,6 +13,7 @@ using DamiFYP.Application.Features.DonationRequests;
 using DamiFYP.ExceptionHandlers.cs;
 using DamiFYP.Infrastructure.BloodAvailability;
 using DamiFYP.Infrastructure.Email;
+using DamiFYP.Infrastructure.FaceVerification;
 using DamiFYP.Persistence.Contexts;
 using DamiFYP.Middlewares;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -43,6 +44,8 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtSett
 builder.Services.Configure<KeycloakOptions>(builder.Configuration.GetSection("Keycloak"));
 builder.Services.Configure<BloodAvailabilityServiceOptions>(
     builder.Configuration.GetSection("BloodAvailabilityService"));
+builder.Services.Configure<FaceVerificationServiceOptions>(
+    builder.Configuration.GetSection("FaceVerificationService"));
 builder.Services.Configure<GeminiOptions>(builder.Configuration.GetSection("Gemini"));
 builder.Services.AddSingleton<AssistantRateLimiter>();
 builder.Services.AddScoped<IAssistantService, GeminiAssistantService>();
@@ -84,6 +87,17 @@ builder.Services.AddHttpClient<IBloodAvailabilityServiceClient, BloodAvailabilit
     {
         throw new InvalidOperationException(
             "BloodAvailabilityService:BaseUrl is not configured.");
+    }
+
+    client.BaseAddress = new Uri(options.BaseUrl);
+});
+builder.Services.AddHttpClient<IFaceVerificationService, FaceVerificationServiceClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<FaceVerificationServiceOptions>>().Value;
+    if (string.IsNullOrWhiteSpace(options.BaseUrl))
+    {
+        throw new InvalidOperationException(
+            "FaceVerificationService:BaseUrl is not configured.");
     }
 
     client.BaseAddress = new Uri(options.BaseUrl);
