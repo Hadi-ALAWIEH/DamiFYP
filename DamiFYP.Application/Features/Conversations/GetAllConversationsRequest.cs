@@ -50,8 +50,13 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                 MatchCreatedAt = conversation.Match.CreatedAt,
                 DonationRequestBloodTypeName = conversation.Match.DonationRequest.BloodTypeName,
                 DonationRequestQuantity = conversation.Match.DonationRequest.Quantity,
+                DonationRequestLatitude = conversation.Match.DonationRequest.Latitude,
+                DonationRequestLongitude = conversation.Match.DonationRequest.Longitude,
                 DonationPostBloodTypeName = conversation.Match.DonationPost.BloodTypeName,
                 DonationPostQuantity = conversation.Match.DonationPost.Quantity,
+                DonationPostLatitude = conversation.Match.DonationPost.Latitude,
+                DonationPostLongitude = conversation.Match.DonationPost.Longitude,
+                DonorUserId = conversation.Match.DonationPost.DamiUserId,
                 OtherUserId = _context.ConversationParticipants
                     .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
                     .Select(participant => participant.DamiUserId)
@@ -109,8 +114,13 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                     MatchCreatedAt = row.MatchCreatedAt,
                     DonationRequestBloodTypeName = row.DonationRequestBloodTypeName.ToString(),
                     DonationRequestQuantity = row.DonationRequestQuantity,
+                    DonationRequestLatitude = row.DonationRequestLatitude,
+                    DonationRequestLongitude = row.DonationRequestLongitude,
                     DonationPostBloodTypeName = row.DonationPostBloodTypeName.ToString(),
                     DonationPostQuantity = row.DonationPostQuantity,
+                    DonationPostLatitude = row.DonationPostLatitude,
+                    DonationPostLongitude = row.DonationPostLongitude,
+                    DonorUserId = row.DonorUserId,
                     OtherUserId = row.OtherUserId,
                     OtherUserName = row.OtherUserName,
                     OtherUserEmail = row.OtherUserEmail,
@@ -137,6 +147,11 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
         public int? DonationPostQuantity { get; set; }
         public string? MatchStatus { get; set; }
         public DateTime MatchCreatedAt { get; set; }
+        public long DonorUserId { get; set; }
+        public double? DonationPostLatitude { get; set; }
+        public double? DonationPostLongitude { get; set; }
+        public double? DonationRequestLatitude { get; set; }
+        public double? DonationRequestLongitude { get; set; }
         public long OtherUserId { get; set; }
         public string OtherUserName { get; set; } = string.Empty;
         public string OtherUserEmail { get; set; } = string.Empty;

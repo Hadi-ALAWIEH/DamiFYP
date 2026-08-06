@@ -3,6 +3,7 @@ using System;
 using DamiFYP.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DamiFYP.Persistence.Migrations
 {
     [DbContext(typeof(DamiContext))]
-    partial class DamiContextModelSnapshot : ModelSnapshot
+    [Migration("20260801214652_AddLocationToPost")]
+    partial class AddLocationToPost
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -161,11 +164,6 @@ namespace DamiFYP.Persistence.Migrations
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
-
-                    b.Property<int>("VerificationStatus")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
 
                     b.HasKey("Id");
 
@@ -323,39 +321,6 @@ namespace DamiFYP.Persistence.Migrations
                     b.ToTable("Message", (string)null);
                 });
 
-            modelBuilder.Entity("DamiFYP.Domain.Models.VerificationAttempt", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<DateTime>("AttemptedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("timestamp with time zone")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<long>("DamiUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("FailureReason")
-                        .HasColumnType("text");
-
-                    b.Property<string>("PoseSequence")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Result")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DamiUserId", "AttemptedAt");
-
-                    b.ToTable("VerificationAttempt", (string)null);
-                });
-
             modelBuilder.Entity("DamiFYP.Domain.Models.BloodType", b =>
                 {
                     b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
@@ -459,17 +424,6 @@ namespace DamiFYP.Persistence.Migrations
                     b.Navigation("ConversationParticipant");
                 });
 
-            modelBuilder.Entity("DamiFYP.Domain.Models.VerificationAttempt", b =>
-                {
-                    b.HasOne("DamiFYP.Domain.Models.DamiUser", "DamiUser")
-                        .WithMany("VerificationAttempts")
-                        .HasForeignKey("DamiUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("DamiUser");
-                });
-
             modelBuilder.Entity("DamiFYP.Domain.Models.Conversation", b =>
                 {
                     b.Navigation("Participants");
@@ -492,8 +446,6 @@ namespace DamiFYP.Persistence.Migrations
                     b.Navigation("DonationPosts");
 
                     b.Navigation("DonationRequests");
-
-                    b.Navigation("VerificationAttempts");
                 });
 
             modelBuilder.Entity("DamiFYP.Domain.Models.DonationPost", b =>

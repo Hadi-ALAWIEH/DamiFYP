@@ -23,6 +23,12 @@ public class ConversationViewModel
     public string? DonationPostBloodTypeName { get; set; }
     public int? DonationPostQuantity { get; set; }
 
+    public long DonorUserId { get; set; }
+    public double? DonationPostLatitude { get; set; }
+    public double? DonationPostLongitude { get; set; }
+    public double? DonationRequestLatitude { get; set; }
+    public double? DonationRequestLongitude { get; set; }
+
     public long OtherUserId { get; set; }
     public string OtherUserName { get; set; } = string.Empty;
     public string OtherUserEmail { get; set; } = string.Empty;

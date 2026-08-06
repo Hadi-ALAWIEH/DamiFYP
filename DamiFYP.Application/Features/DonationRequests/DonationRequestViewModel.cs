@@ -24,6 +24,8 @@ public class DonationPostViewModel
     public long DonorUserId { get; set; }
     public string  DonorName { get; set; }
     public string DonorAddress { get; set; } = "";
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public string? BloodTypeName { get; set; }
     public int? Quantity { get; set; }
 
