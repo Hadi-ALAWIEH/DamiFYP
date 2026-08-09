@@ -125,7 +125,8 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
             Latitude = damiUser.Latitude,
             Longitude = damiUser.Longitude,
             IsAvailable = damiUser.IsAvailable,
-            CreatedAt = damiUser.CreatedAt
+            CreatedAt = damiUser.CreatedAt,
+            VerificationStatus = damiUser.VerificationStatus
         };
     }
 }

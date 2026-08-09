@@ -18,6 +18,7 @@ public class DamiContext : DbContext
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<BloodType> BloodTypes => Set<BloodType>();
     public DbSet<BotMessage> BotMessages => Set<BotMessage>();
+    public DbSet<VerificationAttempt> VerificationAttempts => Set<VerificationAttempt>();
 
     // public DbSet<Organization> Organizations => Set<Organization>();
     // public DbSet<BloodInventory> BloodInventories => Set<BloodInventory>();
@@ -42,6 +43,7 @@ public class DamiContext : DbContext
             entity.Property(x => x.Role).IsRequired();
             entity.Property(x => x.IsAvailable).HasDefaultValue(false);
             entity.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(x => x.VerificationStatus).IsRequired().HasDefaultValue(VerificationStatus.NotStarted);
 
             entity.HasIndex(x => x.Email).IsUnique();
         });
@@ -112,6 +114,23 @@ public class DamiContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => new { x.DamiUserId, x.SentAt });
+        });
+
+        modelBuilder.Entity<VerificationAttempt>(entity =>
+        {
+            entity.ToTable("VerificationAttempt");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.PoseSequence).IsRequired();
+            entity.Property(x => x.Result).IsRequired();
+            entity.Property(x => x.AttemptedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(x => x.DamiUser)
+                .WithMany(x => x.VerificationAttempts)
+                .HasForeignKey(x => x.DamiUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => new { x.DamiUserId, x.AttemptedAt });
         });
 
         // modelBuilder.Entity<BloodType>(entity =>

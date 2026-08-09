@@ -14,5 +14,5 @@ public sealed class UserProfile
     public double? Longitude { get; init; }
     public bool IsAvailable { get; init; }
     public DateTime CreatedAt { get; init; }
+    public VerificationStatus VerificationStatus { get; init; } = VerificationStatus.NotStarted;
 }
-
