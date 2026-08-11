@@ -33,6 +33,7 @@ public class ConversationViewModel
     public string OtherUserName { get; set; } = string.Empty;
     public string OtherUserEmail { get; set; } = string.Empty;
     public BusinessRole OtherUserRole { get; set; } = BusinessRole.None;
+    public string? OtherUserProfilePictureUrl { get; set; }
 
     public string? LatestMessageContent { get; set; }
     public DateTime? LatestMessageSentAt { get; set; }

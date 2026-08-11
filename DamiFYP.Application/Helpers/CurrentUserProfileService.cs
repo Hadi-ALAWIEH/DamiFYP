@@ -126,7 +126,8 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
             Longitude = damiUser.Longitude,
             IsAvailable = damiUser.IsAvailable,
             CreatedAt = damiUser.CreatedAt,
-            VerificationStatus = damiUser.VerificationStatus
+            VerificationStatus = damiUser.VerificationStatus,
+            ProfilePictureUrl = damiUser.ProfilePictureUrl
         };
     }
 }

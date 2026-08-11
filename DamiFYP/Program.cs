@@ -415,6 +415,14 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+var wwwRoot = Path.Combine(builder.Environment.ContentRootPath, "wwwroot");
+Directory.CreateDirectory(wwwRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(wwwRoot),
+    RequestPath = ""
+});
+
 
 
 app.UseCors("ReactClient");

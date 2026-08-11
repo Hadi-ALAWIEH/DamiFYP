@@ -35,6 +35,7 @@ public class DonationPostViewModel
     // page reload, instead of re-deriving it from in-memory state that's lost
     // on refresh.
     public bool IsMatched { get; set; }
+    public string? DonorProfilePictureUrl { get; set; }
 }
 
 public class DonationRequestMatchCandidatesViewModel

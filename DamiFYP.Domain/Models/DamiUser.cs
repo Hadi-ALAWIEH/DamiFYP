@@ -14,6 +14,7 @@ public class DamiUser
     public DateTime? LastActiveAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public string KeyCloakId { get; set; } = string.Empty;
+    public string? ProfilePictureUrl { get; set; }
 
     public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.NotStarted;
 

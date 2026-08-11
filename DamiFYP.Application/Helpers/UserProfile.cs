@@ -15,4 +15,5 @@ public sealed class UserProfile
     public bool IsAvailable { get; init; }
     public DateTime CreatedAt { get; init; }
     public VerificationStatus VerificationStatus { get; init; } = VerificationStatus.NotStarted;
+    public string? ProfilePictureUrl { get; init; }
 }

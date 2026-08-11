@@ -69,10 +69,13 @@ public class MatchService : IMatchService
                 DonationPostId = p.Id,
                 DonorUserId = p.DamiUserId,
                 DonorName = p.DamiUser.Name,
-                DonorAddress = "",
+                DonorAddress = p.Address,
+                Latitude = p.Latitude,
+                Longitude = p.Longitude,
                 BloodTypeName = p.BloodTypeName.ToString(),
                 Quantity = p.Quantity,
-                IsMatched = matchedPostIds.Contains(p.Id)
+                IsMatched = matchedPostIds.Contains(p.Id),
+                DonorProfilePictureUrl = p.DamiUser.ProfilePictureUrl
             })
             .ToListAsync(cancellationToken);
 

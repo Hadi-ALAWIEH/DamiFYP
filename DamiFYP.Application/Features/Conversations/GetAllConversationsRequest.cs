@@ -73,6 +73,10 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                     .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
                     .Select(participant => participant.DamiUser.Role)
                     .FirstOrDefault(),
+                OtherUserProfilePictureUrl = _context.ConversationParticipants
+                    .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
+                    .Select(participant => participant.DamiUser.ProfilePictureUrl)
+                    .FirstOrDefault(),
                 LatestMessageContent = _context.Messages
                     .Where(message => message.ConversationParticipant.ConversationId == conversation.Id)
                     .OrderByDescending(message => message.SentAt)
@@ -125,6 +129,7 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                     OtherUserName = row.OtherUserName,
                     OtherUserEmail = row.OtherUserEmail,
                     OtherUserRole = row.OtherUserRole,
+                    OtherUserProfilePictureUrl = row.OtherUserProfilePictureUrl,
                     LatestMessageContent = row.LatestMessageContent,
                     LatestMessageSentAt = row.LatestMessageSentAt,
                     LatestMessageSenderUserId = row.LatestMessageSenderUserId,
@@ -156,6 +161,7 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
         public string OtherUserName { get; set; } = string.Empty;
         public string OtherUserEmail { get; set; } = string.Empty;
         public BusinessRole OtherUserRole { get; set; } = BusinessRole.None;
+        public string? OtherUserProfilePictureUrl { get; set; }
         public string? LatestMessageContent { get; set; }
         public DateTime? LatestMessageSentAt { get; set; }
         public long? LatestMessageSenderUserId { get; set; }
