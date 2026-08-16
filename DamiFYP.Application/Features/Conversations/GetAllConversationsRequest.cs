@@ -77,6 +77,10 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                     .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
                     .Select(participant => participant.DamiUser.ProfilePictureUrl)
                     .FirstOrDefault(),
+                OtherUserBadgeTier = _context.ConversationParticipants
+                    .Where(participant => participant.ConversationId == conversation.Id && participant.DamiUserId != request.UserId)
+                    .Select(participant => participant.DamiUser.DamiBadge != null ? participant.DamiUser.DamiBadge.Tier : BadgeTier.Newcomer)
+                    .FirstOrDefault(),
                 LatestMessageContent = _context.Messages
                     .Where(message => message.ConversationParticipant.ConversationId == conversation.Id)
                     .OrderByDescending(message => message.SentAt)
@@ -130,6 +134,7 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
                     OtherUserEmail = row.OtherUserEmail,
                     OtherUserRole = row.OtherUserRole,
                     OtherUserProfilePictureUrl = row.OtherUserProfilePictureUrl,
+                    OtherUserBadgeTier = row.OtherUserBadgeTier,
                     LatestMessageContent = row.LatestMessageContent,
                     LatestMessageSentAt = row.LatestMessageSentAt,
                     LatestMessageSenderUserId = row.LatestMessageSenderUserId,
@@ -162,6 +167,7 @@ public class GetAllConversationsRequestHandler : IRequestHandler<GetAllConversat
         public string OtherUserEmail { get; set; } = string.Empty;
         public BusinessRole OtherUserRole { get; set; } = BusinessRole.None;
         public string? OtherUserProfilePictureUrl { get; set; }
+        public BadgeTier OtherUserBadgeTier { get; set; } = BadgeTier.Newcomer;
         public string? LatestMessageContent { get; set; }
         public DateTime? LatestMessageSentAt { get; set; }
         public long? LatestMessageSenderUserId { get; set; }

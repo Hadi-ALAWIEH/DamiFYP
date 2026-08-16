@@ -1,4 +1,4 @@
-﻿using DamiFYP.Application.Authorization;
+using DamiFYP.Application.Authorization;
 using DamiFYP.Application.Features.DonationRequests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -19,9 +19,9 @@ public class DonationRequestController : ControllerBase
 
     [HttpGet("{id}")]
     [Authorize(Roles = "Admin", Policy = AuthorizationPolicies.CanManageDonationRequests)]
-    public async Task<IActionResult> GetDonationRequest(int id)
+    public async Task<IActionResult> GetDonationRequest(long id)
     {
-        var result = await _mediator.Send(new GetDonationRequestQuery { Id = id });
+        var result = await _mediator.Send(new GetDonationRequestQuery { Id = (int)id });
         return Ok(result);
     }
 
@@ -43,19 +43,61 @@ public class DonationRequestController : ControllerBase
 
     [HttpPut("{id}")]
     [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
-    public async Task<IActionResult> UpdateDonationRequest(int id, [FromBody] UpdateDonationRequestCommand command)
+    public async Task<IActionResult> UpdateDonationRequest(long id, [FromBody] UpdateDonationRequestCommand command)
     {
         command.Id = id;
-        var result = await _mediator.Send(command);
-        return Ok(result);
+        try
+        {
+            var result = await _mediator.Send(command);
+            if (result == null) return NotFound();
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
     [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
-    public async Task<IActionResult> DeleteDonationRequest(int id)
+    public async Task<IActionResult> DeleteDonationRequest(long id)
     {
-        await _mediator.Send(new DeleteDonationRequestCommand { Id = id });
-        return NoContent();
+        try
+        {
+            await _mediator.Send(new DeleteDonationRequestCommand { Id = id });
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/cancel")]
+    [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
+    public async Task<IActionResult> CancelRequest(long id)
+    {
+        try
+        {
+            await _mediator.Send(new CancelDonationRequestCommand { Id = id });
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet]
@@ -72,5 +114,24 @@ public class DonationRequestController : ControllerBase
     {
         var result = await _mediator.Send(new GetCurrentUserDonationRequestsQuery());
         return Ok(result);
+    }
+
+    [HttpPost("{id}/confirm-donation")]
+    [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
+    public async Task<IActionResult> ConfirmDonation(long id)
+    {
+        try
+        {
+            await _mediator.Send(new ConfirmDonationCommand { DonationRequestId = id });
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

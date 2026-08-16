@@ -19,6 +19,7 @@ public class DamiContext : DbContext
     public DbSet<BloodType> BloodTypes => Set<BloodType>();
     public DbSet<BotMessage> BotMessages => Set<BotMessage>();
     public DbSet<VerificationAttempt> VerificationAttempts => Set<VerificationAttempt>();
+    public DbSet<DamiBadge> DamiBadges => Set<DamiBadge>();
 
     // public DbSet<Organization> Organizations => Set<Organization>();
     // public DbSet<BloodInventory> BloodInventories => Set<BloodInventory>();
@@ -46,6 +47,22 @@ public class DamiContext : DbContext
             entity.Property(x => x.VerificationStatus).IsRequired().HasDefaultValue(VerificationStatus.NotStarted);
 
             entity.HasIndex(x => x.Email).IsUnique();
+        });
+
+        modelBuilder.Entity<DamiBadge>(entity =>
+        {
+            entity.ToTable("DamiBadge");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Tier).IsRequired().HasDefaultValue(BadgeTier.Newcomer);
+            entity.Property(x => x.DonationPoints).IsRequired().HasDefaultValue(0);
+
+            entity.HasOne(x => x.DamiUser)
+                .WithOne(u => u.DamiBadge)
+                .HasForeignKey<DamiBadge>(x => x.DamiUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.DamiUserId).IsUnique();
         });
 
         modelBuilder.Entity<DonationRequest>(entity =>

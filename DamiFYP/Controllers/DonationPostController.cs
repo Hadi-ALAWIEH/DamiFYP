@@ -1,4 +1,5 @@
 ﻿using DamiFYP.Application.Authorization;
+using DamiFYP.Application.Features.DonationPosts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,5 +39,24 @@ public class DonationPostController : ControllerBase
     {
         var result = await _mediator.Send(new GetCurrentUserDonationPostsQuery());
         return Ok(result);
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Policy = AuthorizationPolicies.CanManageDonationPosts)]
+    public async Task<IActionResult> DeleteDonationPost(long id)
+    {
+        try
+        {
+            await _mediator.Send(new DeleteDonationPostCommand { Id = id });
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

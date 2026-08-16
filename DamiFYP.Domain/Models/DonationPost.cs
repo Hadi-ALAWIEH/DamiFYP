@@ -12,6 +12,8 @@ public class DonationPost
     public double? Longitude { get; set; }
     public string Address { get; set; }
 
+    public DonationPostStatus Status { get; set; } = DonationPostStatus.Active;
+
     public DamiUser DamiUser { get; set; }
     public ICollection<Match> Matches { get; set; } = new List<Match>();
 }

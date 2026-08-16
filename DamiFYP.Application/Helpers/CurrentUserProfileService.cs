@@ -79,6 +79,7 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
         var user = await _context.DamiUsers
             .AsNoTracking()
             .Include(x => x.BloodType)
+            .Include(x => x.DamiBadge)
             .FirstOrDefaultAsync(x => x.KeyCloakId == userId, cancellationToken);
 
         if (user == null)
@@ -127,7 +128,9 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
             IsAvailable = damiUser.IsAvailable,
             CreatedAt = damiUser.CreatedAt,
             VerificationStatus = damiUser.VerificationStatus,
-            ProfilePictureUrl = damiUser.ProfilePictureUrl
+            ProfilePictureUrl = damiUser.ProfilePictureUrl,
+            BadgeTier = damiUser.DamiBadge?.Tier ?? BadgeTier.Newcomer,
+            DonationPoints = damiUser.DamiBadge?.DonationPoints ?? 0,
         };
     }
 }

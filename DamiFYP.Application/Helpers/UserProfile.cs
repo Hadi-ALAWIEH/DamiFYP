@@ -16,4 +16,6 @@ public sealed class UserProfile
     public DateTime CreatedAt { get; init; }
     public VerificationStatus VerificationStatus { get; init; } = VerificationStatus.NotStarted;
     public string? ProfilePictureUrl { get; init; }
+    public BadgeTier BadgeTier { get; init; } = BadgeTier.Newcomer;
+    public int DonationPoints { get; init; } = 0;
 }

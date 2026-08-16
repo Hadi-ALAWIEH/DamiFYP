@@ -2,6 +2,7 @@ using DamiFYP.Application.Features.DonationRequests;
 using DamiFYP.Application.Helpers;
 using DamiFYP.Persistence.Contexts;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 public class GetCurrentUserDonationPostsQuery : IRequest<List<DonationPostViewModel>>
 {
@@ -24,16 +25,22 @@ public class
         CancellationToken cancellationToken)
     {
         var currentUserProfile = await _profileService.GetCurrentAsync(cancellationToken);
-        var donationPosts = _context.DonationPosts.Where(dp => dp.DamiUserId == currentUserProfile.UserId).ToList();
 
-        return donationPosts.Select(dp => new DonationPostViewModel()
-        {
-            DonationPostId = dp.Id,
-            BloodTypeName  = dp.BloodTypeName.ToString(),
-            Quantity       = dp.Quantity,
-            DonorAddress   = dp.Address ?? "",
-            Latitude       = dp.Latitude,
-            Longitude      = dp.Longitude,
-        }).ToList();
+        var donationPosts = await _context.DonationPosts
+            .Where(dp => dp.DamiUserId == currentUserProfile.UserId)
+            .Select(dp => new DonationPostViewModel
+            {
+                DonationPostId = dp.Id,
+                BloodTypeName  = dp.BloodTypeName.ToString(),
+                Quantity       = dp.Quantity,
+                DonorAddress   = dp.Address ?? "",
+                Latitude       = dp.Latitude,
+                Longitude      = dp.Longitude,
+                Status         = dp.Status,
+                IsMatched      = _context.Matches.Any(m => m.DonationPostId == dp.Id),
+            })
+            .ToListAsync(cancellationToken);
+
+        return donationPosts;
     }
 }

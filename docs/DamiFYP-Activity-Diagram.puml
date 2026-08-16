@@ -1,0 +1,302 @@
+@startuml DamiFYP_Activity_Diagram
+
+title DamiFYP -- Backend Activity Diagram
+
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName Segoe UI
+skinparam defaultFontSize 12
+
+skinparam activity {
+    BackgroundColor #FFFFFF
+    BorderColor #C62828
+    FontColor #1E293B
+    DiamondBackgroundColor #FEF2F2
+    DiamondBorderColor #C62828
+    ArrowColor #64748B
+    StartColor #C62828
+    EndColor #7F1D1D
+    BarColor #C62828
+}
+
+skinparam partition {
+    BackgroundColor #FFF5F5
+    BorderColor #C62828
+    FontColor #7F1D1D
+    FontStyle Bold
+}
+
+skinparam note {
+    BackgroundColor #F8FAFC
+    BorderColor #CBD5E1
+    FontColor #475569
+}
+
+'----------------------------------------------------------
+' 1. AUTHENTICATION
+'----------------------------------------------------------
+start
+
+partition "1 - Authentication (Keycloak)" {
+    :User opens the application;
+    :Keycloak JS SDK checks token;\n if absent, redirect to Keycloak login page;
+    :User enters credentials;
+    :Keycloak issues signed JWT (RS256)\ncontaining: sub, email, realm_access.roles;
+    :Frontend stores token in memory\n(Keycloak SDK manages silent refresh);
+}
+
+:Every API request sends\n**Authorization: Bearer <JWT>**;
+
+'----------------------------------------------------------
+' 2. JWT VALIDATION
+'----------------------------------------------------------
+partition "2 - JWT Validation Middleware" {
+    :ASP.NET JwtBearer validates\nsignature, issuer, audience, expiry;
+    if (JWT valid?) then (invalid)
+        #FEE2E2:Return 401 Unauthorized;
+    else (valid)
+        :Extract sub claim as KeyCloakId;
+        :Extract email claim;
+    endif
+}
+
+note right
+  SignalR WS cannot set headers,
+  so token is sent as ?access_token=
+  query param and bridged in
+  OnMessageReceived event handler
+end note
+
+'----------------------------------------------------------
+' 3. CURRENT USER PROFILE MIDDLEWARE
+'----------------------------------------------------------
+partition "3 - CurrentUserProfileMiddleware" {
+    if (UserProfile in memory cache?\n[key: user-profile:{keycloakId}, TTL 2 min]) then (hit)
+        :Use cached UserProfile;
+    else (miss)
+        :Query DamiUser WHERE KeyCloakId = sub;
+        if (User row exists in DB?) then (no)
+            :INSERT minimal DamiUser\n(Role=None, Name=Pending Profile,\nPasswordHash=EXTERNAL_AUTH);
+        else (yes)
+            :Load DamiUser + BloodType;
+        endif
+        :Map to UserProfile DTO\n(UserId, Name, Email, BusinessRole,\nBloodTypeName, Latitude, Longitude,\nIsAvailable, VerificationStatus,\nProfilePictureUrl);
+        :Store in memory cache (2 min TTL);
+    endif
+    :Set UserProfile in HttpContext.Items;
+}
+
+'----------------------------------------------------------
+' 4. PROFILE EXISTENCE CHECK
+'----------------------------------------------------------
+partition "4 - Profile Existence Check (GET /api/CheckProfileExistence)" {
+    if (BusinessRole != None\nAND VerificationStatus = Verified?) then (yes)
+        :Return { completed: true };
+        :Frontend routes to /dashboard;
+    else (no)
+        :Return { completed: false };
+        :Frontend routes to /onboarding;
+    endif
+}
+
+'----------------------------------------------------------
+' 5. ONBOARDING
+'----------------------------------------------------------
+partition "5 - Onboarding (POST /api/CompleteOnboarding)" {
+    :User submits: Name, BusinessRole,\nLatitude?, Longitude?, IsAvailable;
+    if (Name empty OR BusinessRole = None\nOR email already taken?) then (yes)
+        #FEE2E2:Return 400 Bad Request;
+    else (no)
+        :UPDATE DamiUser\n(Name, Role, Email, Latitude,\nLongitude, IsAvailable);
+        :Invalidate profile cache;
+        :Re-fetch and cache updated profile;
+        :Return CompleteUserOnboardingViewModel;
+    endif
+}
+
+'----------------------------------------------------------
+' 6. FACE VERIFICATION
+'----------------------------------------------------------
+partition "6 - Face Verification" {
+    :GET /api/verification/status\n--> return { VerificationStatus, attemptCount };
+    :User performs pose challenge\n(captured as base64 image frames);
+    :POST /api/verification/submit\n{ images[], poseSequence };
+    :Forward to Python face-verification\nmicroservice (HTTP);
+    if (Microservice returns success?) then (yes)
+        :SET VerificationStatus = Verified;
+        :Record VerificationAttempt { Result=Passed };
+        :Invalidate + refresh profile cache;
+        :Return { status: Verified };
+        :profileCompleted = true\n--> navigate to /dashboard;
+    else (no)
+        :SET VerificationStatus = Failed;
+        :Record VerificationAttempt\n{ Result=Failed, FailureReason };
+        :Return { status: Failed, failureReason };
+    endif
+}
+
+:User is in the main authenticated application;
+
+'----------------------------------------------------------
+' 7. BLOOD TYPE LOOKUP
+'----------------------------------------------------------
+partition "7 - Blood Types (GET /api/BloodType/GetAllBloodTypes)" {
+    :Return all 8 blood type options\nas { id, description } list\n(APositive through ABNegative);
+}
+
+'----------------------------------------------------------
+' 8. ROLE BRANCH
+'----------------------------------------------------------
+if (User role?) then (Donor or DonorAndSeeker)
+
+    '------------------------------------------------------
+    ' 8a. DONOR - DONATION POSTS
+    '------------------------------------------------------
+    partition "8 - Donor: Manage Donation Posts (CanManageDonationPosts)" {
+        :GET /api/DonationPost/get-current-user-donation-posts\n--> return donor's own posts\n(bloodType, quantity, address, location);
+        :POST /api/DonationPost/create-donation-post\n{ bloodTypeName, quantity, address, lat, lng };
+        :INSERT DonationPost in DB;
+        :Run background candidate matching;
+        if (Pending seeker requests match\nblood type and quantity?) then (yes)
+            :Push "DonationPostMatch" SignalR event\nto seeker's personal group "user-{seekerId}"\n(donorName, bloodType, quantity, location);
+        else (no)
+        endif
+    }
+
+    '------------------------------------------------------
+    ' 8b. DONOR - VIEW AVAILABLE REQUESTS
+    '------------------------------------------------------
+    partition "9 - Donor: View Available Requests (CanViewAvailableDonationRequests)" {
+        :GET /api/DonationRequest\n--> all pending seeker requests\n(bloodType, quantity, urgency,\nlocation, neededByDate);
+    }
+
+else (Seeker or DonorAndSeeker)
+
+    '------------------------------------------------------
+    ' 9a. SEEKER - DONATION REQUESTS
+    '------------------------------------------------------
+    partition "10 - Seeker: Manage Requests (CanManageDonationRequests)" {
+        :GET /api/DonationRequest/current-user-donation-requests\n--> seeker's own requests with status;
+        :GET /api/DonationRequest/{id}\n--> single request detail;
+        :POST /api/DonationRequest\n{ bloodTypeName, quantity, urgency,\naddress, lat, lng, neededByDate };
+        :Validate fields;
+        :INSERT DonationRequest (Status=Pending);
+        :Immediately run GetCandidatesAsync\nto find compatible donor posts;
+        :Return DonationRequestMatchCandidatesViewModel\n{ donationRequest, candidates[] };
+        :PUT /api/DonationRequest/{id}\n--> update request fields;
+        :DELETE /api/DonationRequest/{id}\n--> remove request;
+    }
+
+    '------------------------------------------------------
+    ' 9b. SEEKER - MATCH CANDIDATES
+    '------------------------------------------------------
+    partition "11 - Seeker: Confirm Match (CanManageDonationRequests)" {
+        :GET /api/DonationPost/get-candidates-{requestId}\n--> posts where bloodType matches\nAND quantity >= needed;\nIncludes: donor name, address,\nlocation, profile picture;
+        :POST /api/DonationPost/confirm-match\n{ donationRequestId, donationPostId };
+        if (Match already exists for\nthis request+post pair?) then (yes)
+            :Return (idempotent no-op);
+        else (no)
+            :BEGIN DB transaction;
+            :INSERT Match { DonationPostId, DonationRequestId };
+            :INSERT Conversation { MatchId };
+            :INSERT ConversationParticipant x2\n(one for seeker, one for donor);
+            :COMMIT transaction;
+            :Push "ConversationStarted" SignalR event\nto seeker group "user-{seekerId}";
+            :Push "ConversationStarted" SignalR event\nto donor group "user-{donorId}";
+            :Send match notification email\nto both parties via SMTP;
+        endif
+    }
+
+    '------------------------------------------------------
+    ' 9c. BLOOD AVAILABILITY PREDICTION
+    '------------------------------------------------------
+    partition "12 - Blood Availability Prediction (CanViewBloodAvailabilityPredictions)" {
+        :POST /api/BloodAvailability/Predict\n{ bloodType, region, date };
+        :Forward to ML microservice;
+        :Return availability prediction\nwith confidence score;
+        :POST /api/BloodAvailability/PredictBatch\n--> predict multiple blood types at once;
+    }
+
+endif
+
+'----------------------------------------------------------
+' 13. CONVERSATIONS
+'----------------------------------------------------------
+partition "13 - Conversations (CanAccessConversations)" {
+    :GET /api/conversation/get-all-conversations;
+    :Find all ConversationIds where\nuser is a ConversationParticipant;
+    :Project for each conversation:\n  match details (blood types, quantities)\n  other participant (name, email, role,\n  profile picture URL)\n  latest message + IsUnread flag\n  donation post and request locations;
+    :Return ordered by latest activity;
+    :GET /api/conversation/{conversationId}/messages\n--> return full message history;\nMark other participant's messages\nas IsRead=true in DB;
+}
+
+'----------------------------------------------------------
+' 14. SIGNALR HUB
+'----------------------------------------------------------
+partition "14 - Real-time Hub (SignalR /hubs/chat)" {
+    :Client connects with JWT\nas ?access_token= query param;
+    :OnConnectedAsync:\n  Join personal group user-{userId}\n  Join conversation groups conv-{id}\n  for each conversation the user is in;
+    if (Client action?) then (SendMessage)
+        :Client calls SendMessage(conversationId, content);
+        :INSERT Message in DB\n(Content, SentAt, IsRead=false,\nConversationParticipantId);
+        :Broadcast "ReceiveMessage" to\nconversation group conv-{convId};
+    else (ShareLocation)
+        :Client calls ShareLocation(conversationId, lat, lng);
+        :Broadcast "LocationUpdate" to\n**OthersInGroup** (never back to sender);
+        note right
+          Sender's own position always
+          comes from browser watchPosition().
+          SignalR only carries the OTHER
+          person's live GPS coordinates.
+        end note
+    endif
+    :OnDisconnectedAsync: leave all groups;
+}
+
+'----------------------------------------------------------
+' 15. BOT ASSISTANT
+'----------------------------------------------------------
+partition "15 - AI Bot Assistant (CanUseAssistant)" {
+    :GET /api/BotAssistant/messages\n--> return conversation history\nwith bot (User/Assistant roles);
+    :POST /api/BotAssistant/messages { userMessage };
+    :Check per-user rate limit\n(8 req/min sliding window, keyed by userId)\nand global Gemini API quota\n(AssistantRateLimiter singleton);
+    if (Any rate limit exceeded?) then (yes)
+        #FEE2E2:Return 429 Too Many Requests;
+    else (no)
+        :Build context: user blood type,\nrole, recent message history;
+        :Send prompt to Gemini API;
+        :INSERT BotMessage { Role=User };
+        :INSERT BotMessage { Role=Assistant };
+        :Return assistant response text;
+    endif
+}
+
+'----------------------------------------------------------
+' 16. ACCOUNT MANAGEMENT
+'----------------------------------------------------------
+partition "16 - Account Management" {
+    :GET /api/GetUserProfile\n--> full current-user UserProfile\n(includes bloodTypeName, createdAt,\nverificationStatus, profilePictureUrl);
+    :PUT /api/UpdateProfile (multipart/form-data)\n{ Name, BusinessRole, IsAvailable,\nLatitude?, Longitude?, ProfilePicture? };
+    if (ProfilePicture file in form data?) then (yes)
+        :Build save path:\nContentRootPath/wwwroot/profile-pictures/\n{userId}_{DateTime.Ticks}.{ext};
+        :Directory.CreateDirectory (idempotent);
+        :Write file bytes to disk;
+        :Set ProfilePictureUrl =\n"/profile-pictures/{filename}" in DB;
+    else (no)
+        :Keep existing ProfilePictureUrl;
+    endif
+    :UPDATE DamiUser\n(Name, Role, IsAvailable, Lat, Lng,\nProfilePictureUrl);
+    :Invalidate profile cache\n(remove user-profile:{keycloakId} from IMemoryCache);
+    :Re-fetch profile from DB and re-cache;
+    :Return updated UserProfile;
+}
+
+note right
+  Served by UseStaticFiles() with explicit
+  PhysicalFileProvider(ContentRootPath/wwwroot).
+  Frontend constructs full image URL as:
+  VITE_API_URL + profilePictureUrl
+end note
+
+stop
+
+@enduml

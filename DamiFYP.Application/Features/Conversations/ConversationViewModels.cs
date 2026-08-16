@@ -34,6 +34,7 @@ public class ConversationViewModel
     public string OtherUserEmail { get; set; } = string.Empty;
     public BusinessRole OtherUserRole { get; set; } = BusinessRole.None;
     public string? OtherUserProfilePictureUrl { get; set; }
+    public BadgeTier OtherUserBadgeTier { get; set; } = BadgeTier.Newcomer;
 
     public string? LatestMessageContent { get; set; }
     public DateTime? LatestMessageSentAt { get; set; }

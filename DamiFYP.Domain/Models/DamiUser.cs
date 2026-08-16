@@ -24,6 +24,7 @@ public class DamiUser
     public ICollection<ConversationParticipant> ConversationParticipants { get; set; } = new List<ConversationParticipant>();
     public ICollection<BotMessage> BotMessages { get; set; } = new List<BotMessage>();
     public ICollection<VerificationAttempt> VerificationAttempts { get; set; } = new List<VerificationAttempt>();
+    public DamiBadge? DamiBadge { get; set; }
 
     // public ICollection<Match> MatchesAsDonor { get; set; } = new List<Match>();
     // public ICollection<Message> SentMessages { get; set; } = new List<Message>();

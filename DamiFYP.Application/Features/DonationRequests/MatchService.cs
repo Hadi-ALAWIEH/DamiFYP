@@ -61,9 +61,17 @@ public class MatchService : IMatchService
 
         var donationPostViewModels = await _context.DonationPosts
             .AsNoTracking()
+            .Where(p => p.Status == DonationPostStatus.Active)
             .Where(p => p.BloodTypeName == request.BloodTypeName)
             .Where(p => p.Quantity >= request.Quantity)
+            .Where(p => !_context.Matches.Any(m =>
+                m.DonationPostId == p.Id &&
+                _context.DonationRequests.Any(r =>
+                    r.Id == m.DonationRequestId &&
+                    r.Status != DonationRequestStatus.Completed &&
+                    r.Status != DonationRequestStatus.Cancelled)))
             .Include(donationPost => donationPost.DamiUser)
+                .ThenInclude(u => u.DamiBadge)
             .Select(p => new DonationPostViewModel
             {
                 DonationPostId = p.Id,
@@ -74,8 +82,10 @@ public class MatchService : IMatchService
                 Longitude = p.Longitude,
                 BloodTypeName = p.BloodTypeName.ToString(),
                 Quantity = p.Quantity,
+                Status = p.Status,
                 IsMatched = matchedPostIds.Contains(p.Id),
-                DonorProfilePictureUrl = p.DamiUser.ProfilePictureUrl
+                DonorProfilePictureUrl = p.DamiUser.ProfilePictureUrl,
+                DonorBadgeTier = p.DamiUser.DamiBadge != null ? p.DamiUser.DamiBadge.Tier : BadgeTier.Newcomer,
             })
             .ToListAsync(cancellationToken);
 
@@ -111,6 +121,8 @@ public class MatchService : IMatchService
             return;
 
         using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        request.Status = DonationRequestStatus.Matched;
 
         var match = new Match
         {
