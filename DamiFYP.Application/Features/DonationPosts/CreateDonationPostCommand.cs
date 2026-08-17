@@ -2,7 +2,11 @@
 using DamiFYP.Domain.Models;
 using DamiFYP.Infrastructure.Email;
 using DamiFYP.Persistence.Contexts;
-using MediatR;ear
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using CancellationToken = System.Threading.CancellationToken;
+using Task = System.Threading.Tasks.Task;
+
 
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
