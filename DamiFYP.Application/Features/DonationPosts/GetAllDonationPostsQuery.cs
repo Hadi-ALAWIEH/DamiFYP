@@ -30,14 +30,22 @@ public class
             .Where(dp => dp.DamiUserId == currentUserProfile.UserId)
             .Select(dp => new DonationPostViewModel
             {
-                DonationPostId = dp.Id,
-                BloodTypeName  = dp.BloodTypeName.ToString(),
-                Quantity       = dp.Quantity,
-                DonorAddress   = dp.Address ?? "",
-                Latitude       = dp.Latitude,
-                Longitude      = dp.Longitude,
-                Status         = dp.Status,
-                IsMatched      = _context.Matches.Any(m => m.DonationPostId == dp.Id),
+                DonationPostId          = dp.Id,
+                BloodTypeName           = dp.BloodTypeName.ToString(),
+                Quantity                = dp.Quantity,
+                DonorAddress            = dp.Address ?? "",
+                Latitude                = dp.Latitude,
+                Longitude               = dp.Longitude,
+                Status                  = dp.Status,
+                IsMatched               = _context.Matches.Any(m => m.DonationPostId == dp.Id),
+                ReceivedFeedbackRating  = _context.DonorFeedbacks
+                    .Where(f => _context.Matches.Any(m => m.DonationPostId == dp.Id && m.DonationRequestId == f.DonationRequestId))
+                    .Select(f => (int?)f.Rating)
+                    .FirstOrDefault(),
+                ReceivedFeedbackComment = _context.DonorFeedbacks
+                    .Where(f => _context.Matches.Any(m => m.DonationPostId == dp.Id && m.DonationRequestId == f.DonationRequestId))
+                    .Select(f => f.Comment)
+                    .FirstOrDefault(),
             })
             .ToListAsync(cancellationToken);
 

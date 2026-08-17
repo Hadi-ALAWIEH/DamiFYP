@@ -74,18 +74,25 @@ public class MatchService : IMatchService
                 .ThenInclude(u => u.DamiBadge)
             .Select(p => new DonationPostViewModel
             {
-                DonationPostId = p.Id,
-                DonorUserId = p.DamiUserId,
-                DonorName = p.DamiUser.Name,
-                DonorAddress = p.Address,
-                Latitude = p.Latitude,
-                Longitude = p.Longitude,
-                BloodTypeName = p.BloodTypeName.ToString(),
-                Quantity = p.Quantity,
-                Status = p.Status,
-                IsMatched = matchedPostIds.Contains(p.Id),
+                DonationPostId         = p.Id,
+                DonorUserId            = p.DamiUserId,
+                DonorName              = p.DamiUser.Name,
+                DonorAddress           = p.Address,
+                Latitude               = p.Latitude,
+                Longitude              = p.Longitude,
+                BloodTypeName          = p.BloodTypeName.ToString(),
+                Quantity               = p.Quantity,
+                Status                 = p.Status,
+                IsMatched              = matchedPostIds.Contains(p.Id),
                 DonorProfilePictureUrl = p.DamiUser.ProfilePictureUrl,
-                DonorBadgeTier = p.DamiUser.DamiBadge != null ? p.DamiUser.DamiBadge.Tier : BadgeTier.Newcomer,
+                DonorBadgeTier         = p.DamiUser.DamiBadge != null ? p.DamiUser.DamiBadge.Tier : BadgeTier.Newcomer,
+                AverageRating          = _context.DonorFeedbacks
+                    .Where(f => _context.Matches.Any(m => m.DonationRequestId == f.DonationRequestId
+                                && _context.DonationPosts.Any(dp2 => dp2.Id == m.DonationPostId && dp2.DamiUserId == p.DamiUserId)))
+                    .Average(f => (double?)f.Rating),
+                ReviewCount            = _context.DonorFeedbacks
+                    .Count(f => _context.Matches.Any(m => m.DonationRequestId == f.DonationRequestId
+                                && _context.DonationPosts.Any(dp2 => dp2.Id == m.DonationPostId && dp2.DamiUserId == p.DamiUserId))),
             })
             .ToListAsync(cancellationToken);
 

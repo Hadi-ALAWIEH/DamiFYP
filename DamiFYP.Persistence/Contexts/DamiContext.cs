@@ -20,6 +20,7 @@ public class DamiContext : DbContext
     public DbSet<BotMessage> BotMessages => Set<BotMessage>();
     public DbSet<VerificationAttempt> VerificationAttempts => Set<VerificationAttempt>();
     public DbSet<DamiBadge> DamiBadges => Set<DamiBadge>();
+    public DbSet<DonorFeedback> DonorFeedbacks => Set<DonorFeedback>();
 
     // public DbSet<Organization> Organizations => Set<Organization>();
     // public DbSet<BloodInventory> BloodInventories => Set<BloodInventory>();
@@ -56,6 +57,7 @@ public class DamiContext : DbContext
 
             entity.Property(x => x.Tier).IsRequired().HasDefaultValue(BadgeTier.Newcomer);
             entity.Property(x => x.DonationPoints).IsRequired().HasDefaultValue(0);
+            entity.Property(x => x.LastDonationAt).IsRequired(false);
 
             entity.HasOne(x => x.DamiUser)
                 .WithOne(u => u.DamiBadge)
@@ -63,6 +65,22 @@ public class DamiContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasIndex(x => x.DamiUserId).IsUnique();
+        });
+
+        modelBuilder.Entity<DonorFeedback>(entity =>
+        {
+            entity.ToTable("DonorFeedback");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Rating).IsRequired();
+            entity.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(x => x.DonationRequest)
+                .WithOne(r => r.DonorFeedback)
+                .HasForeignKey<DonorFeedback>(x => x.DonationRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(x => x.DonationRequestId).IsUnique();
         });
 
         modelBuilder.Entity<DonationRequest>(entity =>

@@ -116,6 +116,26 @@ public class DonationRequestController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("{id}/feedback")]
+    [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
+    public async Task<IActionResult> SubmitFeedback(long id, [FromBody] SubmitDonorFeedbackCommand command)
+    {
+        command.DonationRequestId = id;
+        try
+        {
+            await _mediator.Send(command);
+            return NoContent();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("{id}/confirm-donation")]
     [Authorize(Policy = AuthorizationPolicies.CanManageDonationRequests)]
     public async Task<IActionResult> ConfirmDonation(long id)

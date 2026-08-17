@@ -20,6 +20,7 @@ public class DonationRequest
 
     public DamiUser DamiUser { get; set; }
     public ICollection<Match> Matches { get; set; } = new List<Match>();
+    public DonorFeedback? DonorFeedback { get; set; }
 
     // public ICollection<Message> Messages { get; set; } = new List<Message>();
     // public ICollection<Donation> Donations { get; set; } = new List<Donation>();

@@ -3,6 +3,7 @@ using System;
 using DamiFYP.Persistence.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace DamiFYP.Persistence.Migrations
 {
     [DbContext(typeof(DamiContext))]
-    partial class DamiContextModelSnapshot : ModelSnapshot
+    [Migration("20260816225917_AddDonorFeedback")]
+    partial class AddDonorFeedback
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,9 +134,6 @@ namespace DamiFYP.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
-
-                    b.Property<DateTime?>("LastDonationAt")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Tier")
                         .ValueGeneratedOnAdd()

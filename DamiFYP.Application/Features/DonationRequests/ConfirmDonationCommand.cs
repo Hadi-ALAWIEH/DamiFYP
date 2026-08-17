@@ -88,8 +88,13 @@ public class ConfirmDonationCommandHandler : IRequestHandler<ConfirmDonationComm
                 >= 1  => BadgeTier.Helper,
                 _     => BadgeTier.Newcomer,
             };
+            badge.LastDonationAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            // Bust the in-memory cache so the donor's next profile fetch
+            // returns the updated badge tier immediately.
+            await _currentUserProfileService.InvalidateAsync(donor.KeyCloakId);
 
             var bloodType = donationRequest.BloodTypeName.ToString();
 

@@ -21,6 +21,7 @@ public class DamiBadge
     public long      DamiUserId     { get; set; }
     public BadgeTier Tier           { get; set; } = BadgeTier.Newcomer;
     public int       DonationPoints { get; set; } = 0;
+    public DateTime? LastDonationAt { get; set; }
 
     public DamiUser DamiUser { get; set; } = null!;
 }

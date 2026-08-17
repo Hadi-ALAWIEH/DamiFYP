@@ -131,6 +131,8 @@ public sealed class CurrentUserProfileService : ICurrentUserProfileService
             ProfilePictureUrl = damiUser.ProfilePictureUrl,
             BadgeTier = damiUser.DamiBadge?.Tier ?? BadgeTier.Newcomer,
             DonationPoints = damiUser.DamiBadge?.DonationPoints ?? 0,
+            // Production: .AddDays(56) — swap when going live
+            CooldownEndsAt = damiUser.DamiBadge?.LastDonationAt?.Add(TimeSpan.FromMinutes(5)),
         };
     }
 }

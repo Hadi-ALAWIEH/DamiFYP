@@ -15,6 +15,9 @@ public class DonationRequestViewModel
     public DonationRequestStatus Status { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? NeededByDate { get; set; }
+    public int?    FeedbackRating  { get; set; }
+    public string? FeedbackComment { get; set; }
+    public bool    HasFeedback     { get; set; }
 }
 
 
@@ -35,6 +38,12 @@ public class DonationPostViewModel
     public bool IsMatched { get; set; }
     public string? DonorProfilePictureUrl { get; set; }
     public BadgeTier? DonorBadgeTier { get; set; }
+    // Specific feedback received for this completed donation (donor's My Posts view)
+    public int?    ReceivedFeedbackRating  { get; set; }
+    public string? ReceivedFeedbackComment { get; set; }
+    // Aggregate across all completed donations by this donor (seeker's candidate cards)
+    public double? AverageRating { get; set; }
+    public int     ReviewCount   { get; set; }
 }
 
 public class DonationRequestMatchCandidatesViewModel

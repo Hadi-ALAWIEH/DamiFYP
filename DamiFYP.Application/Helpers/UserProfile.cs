@@ -18,4 +18,5 @@ public sealed class UserProfile
     public string? ProfilePictureUrl { get; init; }
     public BadgeTier BadgeTier { get; init; } = BadgeTier.Newcomer;
     public int DonationPoints { get; init; } = 0;
+    public DateTime? CooldownEndsAt { get; init; }
 }
